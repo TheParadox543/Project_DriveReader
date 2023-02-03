@@ -195,17 +195,17 @@ def search_test():
         main_folder_id = response.get("files")[0].get("id")
         # print(main_folder_id)
 
-        def search_folders(parent_id):
+        def search_folders(parent_id, start_str):
             new_response = service.files().list(q=f"'{parent_id}' in parents",
                                                 spaces='drive',
                                                 fields='nextPageToken, files(id, name, mimeType)',
                                                 pageToken=page_token).execute()
             # print(new_response)
             for file in new_response.get("files"):
-                print(f"{file.get('name')}, {file.get('mimeType')}")
-                search_folders(file.get("id"))
+                print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
+                search_folders(file.get("id"), start_str+"\t")
         
-        search_folders(main_folder_id)
+        search_folders(main_folder_id, "")
 
     except HttpError as error:
         print(F'An error occurred: {error}')
