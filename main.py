@@ -56,6 +56,42 @@ def main():
         # TODO(developer) - Handle errors from drive API.
         print(f'An error occurred: {error}')
 
+def search_folder():
+    """Search file in drive location
+
+    Load pre-authorized user credentials from the environment.
+    TODO(developer) - See https://developers.google.com/identity
+    for guides on implementing OAuth2 for the application.
+    """
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+
+    try:
+        # create drive api client
+        service = build('drive', 'v3', credentials=creds)
+        files = []
+        page_token = None
+        while True:
+            # pylint: disable=maybe-no-member
+            response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder'",
+                                            spaces='drive',
+                                            fields='nextPageToken, '
+                                                   'files(parents, name)',
+                                            pageToken=page_token).execute()
+            for file in response.get('files', []):
+                # Process change
+                print(F'Found file: {file.get("name")}, {file.get("parents")}')
+            files.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+
+    except HttpError as error:
+        print(F'An error occurred: {error}')
+        files = None
+
+    return files
+
 
 if __name__ == '__main__':
-    main()
+    search_folder()
