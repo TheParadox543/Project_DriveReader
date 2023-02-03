@@ -128,6 +128,48 @@ def search_teacher():
 
     return files
 
+def search_test():
+    """Search file in drive location
+
+    Load pre-authorized user credentials from the environment.
+    TODO(developer) - See https://developers.google.com/identity
+    for guides on implementing OAuth2 for the application.
+    """
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+
+    try:
+        # create drive api client
+        service = build('drive', 'v3', credentials=creds)
+        files = []
+        page_token = None
+        while True:
+            # pylint: disable=maybe-no-member
+            # response = service.files().list(q="name contains 'Teacher'",
+            #                                 spaces='drive',
+            #                                 fields='nextPageToken,' 
+            #                                         'files(id, name, parents)',
+            #                                 pageToken=page_token).execute()
+            response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and '1vV5M8ZPeeFBKReEa1n7eFhMJev8Z7luu' in parents",
+                                            spaces='drive',
+                                            fields='nextPageToken, '
+                                                   'files(parents, name, id)',
+                                            pageToken=page_token).execute()
+            print(response)
+            for file in response.get('files', []):
+                # Process change
+                print(F'Found file: {file.get("name")}, {file.get("id")}, {file.get("parents")}')
+            files.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+
+    except HttpError as error:
+        print(F'An error occurred: {error}')
+        files = None
+
+    return files
+
 
 if __name__ == '__main__':
-    search_folder()
+    search_test()
