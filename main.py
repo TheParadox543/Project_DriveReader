@@ -3,6 +3,7 @@ from __future__ import print_function
 import os.path
 import json
 import sys
+import time
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -79,13 +80,18 @@ class DriveReader():
 
     def main(self):
         """The main function of the class."""
-        self.validate_user()
-        while True:
-            command = input("Enter command:")
-            if command == "Search all folders":
-                self.search_for_all_folders()
-            elif command == "quit" or command == "exit":
-                sys.exit()
+        try:
+            self.validate_user()
+            while True:
+                command = input("Enter command:")
+                if command == "Search all folders":
+                    self.search_for_all_folders()
+                elif command == "quit" or command == "exit":
+                    sys.exit()
+                elif command == "run":
+                    time.sleep(100)
+        except KeyboardInterrupt:
+            print("\n\nExiting the program")
 
 
 if __name__ == '__main__':
