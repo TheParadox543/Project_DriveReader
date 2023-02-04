@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os.path
+import json
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -11,208 +12,45 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
-    'https://www.googleapis.com/auth/drive'
 ]
 
+class DriveReader():
+    """This project aims to read files in a drive and categorize them."""
 
-def main():
-    """Shows basic usage of the Drive v3 API.
-    Prints the names and ids of the first 10 files the user has access to.
-    """
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+    def __init__(self) -> None:
+        """Initialize the class."""
+        self.creds = None
 
-    try:
-        service:Resource = build('drive', 'v3', credentials=creds)
-        print(type(service.files().list()))
+    def validate_user(self):
+        """Validate the program if the user who runs it is registered."""
+        # Take user's name.
+        user = input("Enter your credentials:")
 
-        # Call the Drive v3 API
-        results = service.files().list(
-            pageSize=10, fields="nextPageToken, files(id, name)").execute()
-        items = results.get('files', [])
+        # The file stores user's access and refresh tokens, and is created 
+        # automatically when first authorization flow is completed.
+        if os.path.exists(f"{user}.json"):
+            self.creds = Credentials.from_authorized_user_file(f"{user}.json", 
+                                                               SCOPES)
 
-        if not items:
-            print('No files found.')
-            return
-        print('Files:')
-        for item in items:
-            print(u'{0} ({1})'.format(item['name'], item['id']))
-    except HttpError as error:
-        # TODO(developer) - Handle errors from drive API.
-        print(f'An error occurred: {error}')
+        if not self.creds or not self.creds.valid:
+            if self.creds and self.creds.expired and self.creds.refresh_token:
+                self.creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    "credentials.json", SCOPES)
+                self.creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(f"{user}.json", "w") as token:
+                token.write(self.creds.to_json())
 
-def search_folder():
-    """Search file in drive location
+    def search_for_all_folders(self):
+        """A function to identify all folders in a drive."""
 
-    Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity
-    for guides on implementing OAuth2 for the application.
-    """
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-
-    try:
-        # create drive api client
-        service = build('drive', 'v3', credentials=creds)
-        files = []
-        page_token = None
-        while True:
-            # pylint: disable=maybe-no-member
-            response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder'",
-                                            spaces='drive',
-                                            fields='nextPageToken, '
-                                                   'files(parents, name)',
-                                            pageToken=page_token).execute()
-            for file in response.get('files', []):
-                # Process change
-                print(F'Found file: {file.get("name")}, {file.get("parents")}')
-            files.extend(response.get('files', []))
-            page_token = response.get('nextPageToken', None)
-            if page_token is None:
-                break
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        files = None
-
-    return files
-
-def search_teacher():
-    """Search file in drive location
-
-    Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity
-    for guides on implementing OAuth2 for the application.
-    """
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-
-    try:
-        # create drive api client
-        service = build('drive', 'v3', credentials=creds)
-        files = []
-        page_token = None
-        while True:
-            # pylint: disable=maybe-no-member
-            response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and '1vV5M8ZPeeFBKReEa1n7eFhMJev8Z7luu' in parents",
-                                            spaces='drive',
-                                            fields='nextPageToken, '
-                                                   'files(parents, name)',
-                                            pageToken=page_token).execute()
-            for file in response.get('files', []):
-                # Process change
-                print(F'Found file: {file.get("name")}, {file.get("parents")}')
-            files.extend(response.get('files', []))
-            page_token = response.get('nextPageToken', None)
-            if page_token is None:
-                break
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        files = None
-
-    return files
-
-def search_test_1():
-    """Search file in drive location
-
-    Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity
-    for guides on implementing OAuth2 for the application.
-    """
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-
-    try:
-        # create drive api client
-        service = build('drive', 'v3', credentials=creds)
-        files = []
-        page_token = None
-        while True:
-            # pylint: disable=maybe-no-member
-            # response = service.files().list(q="name contains 'Teacher'",
-            #                                 spaces='drive',
-            #                                 fields='nextPageToken,' 
-            #                                         'files(id, name, parents)',
-            #                                 pageToken=page_token).execute()
-            response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and '1vV5M8ZPeeFBKReEa1n7eFhMJev8Z7luu' in parents",
-                                            spaces='drive',
-                                            fields='nextPageToken, '
-                                                   'files(parents, name, id)',
-                                            pageToken=page_token).execute()
-            print(response)
-            for file in response.get('files', []):
-                # Process change
-                print(F'Found file: {file.get("name")}, {file.get("id")}, {file.get("parents")}')
-            files.extend(response.get('files', []))
-            page_token = response.get('nextPageToken', None)
-            if page_token is None:
-                break
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        files = None
-
-    return files
-
-def search_test():
-    """Search file in drive location
-
-    Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity
-    for guides on implementing OAuth2 for the application.
-    """
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-
-    try:
-        # create drive api client
-        service = build('drive', 'v3', credentials=creds)
-        files = []
-        page_token = None
-
-        response:dict = service.files().list(q="name contains 'Project DriveReader'",
-                                      spaces='drive',
-                                      fields='nextPageToken, files(id)',
-                                      pageToken=page_token).execute()
-        # for file in response.get("files"):
-        #     print(file)
-        main_folder_id = response.get("files")[0].get("id")
-        # print(main_folder_id)
-
-        def search_folders(parent_id):
-            new_response = service.files().list(q=f"'{parent_id}' in parents",
-                                                spaces='drive',
-                                                fields='nextPageToken, files(id, name, mimeType)',
-                                                pageToken=page_token).execute()
-            # print(new_response)
-            for file in new_response.get("files"):
-                print(f"{file.get('name')}, {file.get('mimeType')}")
-                search_folders(file.get("id"))
-        
-        search_folders(main_folder_id)
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        files = None
-
-    return files
+    def main(self):
+        """The main function of the class."""
+        self.validate_user()
 
 
 if __name__ == '__main__':
-    search_test()
+    DR = DriveReader()
+    DR.main()
