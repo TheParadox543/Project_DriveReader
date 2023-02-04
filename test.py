@@ -7,6 +7,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError
+import json
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -180,6 +181,8 @@ def search_test():
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
 
+    data_to_dump = {}
+
     try:
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
@@ -195,17 +198,29 @@ def search_test():
         main_folder_id = response.get("files")[0].get("id")
         # print(main_folder_id)
 
-        def search_folders(parent_id, start_str):
+        def search_folders(parent_id:str, parent_name:str, start_str:str):
             new_response = service.files().list(q=f"'{parent_id}' in parents",
                                                 spaces='drive',
                                                 fields='nextPageToken, files(id, name, mimeType)',
                                                 pageToken=page_token).execute()
-            # print(new_response)
+            
+            parent_key = []
+
+            # print(f"Parent name: {parent_name}")
             for file in new_response.get("files"):
-                print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
-                search_folders(file.get("id"), start_str+"\t")
-        
-        search_folders(main_folder_id, "")
+                # print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
+                if file.get('mimeType')[28:] == "folder":
+                    returned_folder = search_folders(file.get("id"), file.get("name"), start_str+"\t")
+                    # print(returned_folder)
+                    parent_key.append(returned_folder)
+                else:
+                    parent_key.append((file.get("name")))#, file.get('mimeType')[28:]))
+            return {parent_name:parent_key}
+
+        data_to_dump = search_folders(main_folder_id, "Project DriveReader","")
+        print(data_to_dump)
+        with open("data.json", "w") as f:
+            json.dump(data_to_dump, f)
 
     except HttpError as error:
         print(F'An error occurred: {error}')
