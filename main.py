@@ -45,10 +45,41 @@ class DriveReader():
 
     def search_for_all_folders(self):
         """A function to identify all folders in a drive."""
+        try:
+            # Create a service to connect with drive.
+            self.service = build("drive", "v3", credentials=self.creds)
+            files = []
+            page_token = None
+            while True:
+                # Search for all folders in drive.
+                response:dict = self.service.files().list(
+                    corpora="user",
+                    q="mimeType='application/vnd.google-apps.folder'",
+                    spaces='drive',
+                    fields="nextPageToken, files(name, parents)",
+                    supportsAllDrives=False,
+                    pageToken=page_token
+                ).execute()
+                file: dict
+                # Loop through all files in the response
+                for file in response.get("files", []):
+                    # Process change
+                    print(F"Found file: {file.get('name')}, {file.get('parents')}")
+                files.extend(response.get("files", []))
+                page_token = response.get("nextPageToken", None)
+                if page_token is None:
+                    break
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            files = None
+
+        return files
 
     def main(self):
         """The main function of the class."""
         self.validate_user()
+        self.search_for_all_folders()
 
 
 if __name__ == '__main__':
