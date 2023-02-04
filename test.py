@@ -1,13 +1,13 @@
 from __future__ import print_function
 
 import os.path
+import json
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError
-import json
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -220,7 +220,8 @@ def search_test():
         data_to_dump = search_folders(main_folder_id, "Project DriveReader","")
         print(data_to_dump)
         with open("data.json", "w") as f:
-            json.dump(data_to_dump, f)
+            json_obj = json.dumps(data_to_dump, indent=4)
+            f.write(json_obj)
 
     except HttpError as error:
         print(F'An error occurred: {error}')
