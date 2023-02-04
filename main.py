@@ -45,11 +45,12 @@ class DriveReader():
             with open(f"{user}.json", "w") as token:
                 token.write(self.creds.to_json())
 
+        # Create a connection with drive.
+        self.service = build("drive", "v3", credentials=self.creds)
+
     def search_for_all_folders(self):
         """A function to identify all folders in a drive."""
         try:
-            # Create a service to connect with drive.
-            self.service = build("drive", "v3", credentials=self.creds)
             files = []
             page_token = None
             while True:
