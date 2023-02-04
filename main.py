@@ -79,6 +79,65 @@ class DriveReader():
 
         return files
 
+    def categorize_folders_from_drive(self):
+        """Search for folders and files in the Project folder."""
+        try:
+            files = []
+
+            response:dict = self.service.files().list(
+                q="name contains 'Project DriveReader'",
+                spaces='drive',
+                fields='nextPageToken, files(id)'
+            ).execute()
+            main_folder_id = response.get("files")[0].get("id")
+
+            if main_folder_id is not None:
+                files = self.search_folders(main_folder_id, "Project DriveReader")
+                with open("data.json", "w") as f:
+                    json_obj = json.dumps(files, indent=4)
+                    f.write(json_obj)
+            else:
+                print("Could not find the folder.")
+
+        except HttpError as error:
+            print(F'An error occurred: {error}')
+            files = None
+
+        return files
+
+    def search_folders(self, parent_id:str, parent_name:str):
+        """
+        A recursive function to keep listing all files and folders located
+        inside of a folder.
+        """
+        try:
+            page_token = None
+            files = []
+            while True:
+                response = self.service.files().list(
+                    q=f"'{parent_id}' in parents and trashed = false",
+                    spaces='drive',
+                    fields='nextPageToken, files(id, name, mimeType)',
+                    pageToken=page_token
+                ).execute()
+
+                for file in response.get("files"):
+                    # print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
+                    if file.get('mimeType')[28:] == "folder":
+                        returned_folder = self.search_folders(file.get("id"), 
+                                                              file.get("name"))
+                        files.append(returned_folder)
+                    else:
+                        files.append((file.get("name")))
+                page_token = response.get("nextPageToken", None)
+                if page_token is None:
+                    break
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+
+        return {parent_name:files}
+
     def main(self):
         """The main function of the class."""
         try:
@@ -89,10 +148,15 @@ class DriveReader():
                     self.search_for_all_folders()
                 elif command == "quit" or command == "exit":
                     sys.exit()
+                elif command == "search":
+                    while True:
+                        self.categorize_folders_from_drive()
+                        time.sleep(10)
+                        print("Done")
                 elif command == "run":
                     time.sleep(100)
         except KeyboardInterrupt:
-            print("\n\nExiting the program")
+            print("\n\nExiting the program by interrupt.")
 
 
 if __name__ == '__main__':
