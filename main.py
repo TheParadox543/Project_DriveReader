@@ -22,6 +22,7 @@ class DriveReader():
     def __init__(self) -> None:
         """Initialize the class."""
         self.creds = None
+        self.validate_user()
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
@@ -141,7 +142,6 @@ class DriveReader():
     def main(self):
         """The main function of the class."""
         try:
-            self.validate_user()
             while True:
                 command = input("Enter command:")
                 if command == "Search all folders":
@@ -151,8 +151,8 @@ class DriveReader():
                 elif command == "search":
                     while True:
                         self.categorize_folders_from_drive()
-                        time.sleep(10)
                         print("Done")
+                        time.sleep(3)
                 elif command == "run":
                     time.sleep(100)
         except KeyboardInterrupt:
@@ -161,4 +161,7 @@ class DriveReader():
 
 if __name__ == '__main__':
     DR = DriveReader()
-    DR.main()
+    try:
+        DR.main()
+    except KeyboardInterrupt:
+        print("\n\nExiting program by interrput.")
