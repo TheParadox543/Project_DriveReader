@@ -171,7 +171,10 @@ class DriveReader():
 
 
 if __name__ == '__main__':
-    DR = DriveReader()
+    try:
+        DR = DriveReader()
+    except KeyboardInterrupt:
+        print("\n\nExiting program by interrput.")
     if DR.creds and DR.creds.valid:
         try:
             DR.main()
