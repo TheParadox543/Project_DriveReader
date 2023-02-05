@@ -89,29 +89,34 @@ class DriveReader():
 
     def categorize_folders_from_drive(self):
         """Search for folders and files in the Project folder."""
-        try:
-            files = []
+        while True:
+            try:
+                files = []
 
-            response:dict = self.service.files().list(
-                q="name contains 'Project DriveReader'",
-                spaces='drive',
-                fields='nextPageToken, files(id)'
-            ).execute()
-            main_folder_id = response.get("files")[0].get("id")
+                response:dict = self.service.files().list(
+                    q="name contains 'Project DriveReader'",
+                    spaces='drive',
+                    fields='nextPageToken, files(id)'
+                ).execute()
+                try:
+                    main_folder_id = response.get("files")[0].get("id")
+                except IndexError:
+                    print("Could not find the folder.")
+                    return
 
-            if main_folder_id is not None:
-                files = self.search_folders(main_folder_id, "Project DriveReader")
-                with open("data.json", "w") as f:
-                    json_obj = json.dumps(files, indent=4)
-                    f.write(json_obj)
-            else:
-                print("Could not find the folder.")
+                else:
+                    if main_folder_id is not None:
+                        files = self.search_folders(main_folder_id, 
+                                                    "Project DriveReader")
+                        with open("data.json", "w") as f:
+                            json_obj = json.dumps(files, indent=4)
+                            f.write(json_obj)
+                    else:
+                        print("Could not find the folder.")
 
-        except HttpError as error:
-            print(F'An error occurred: {error}')
-            files = None
-
-        return files
+            except HttpError as error:
+                print(F'An error occurred: {error}')
+                files = None
 
     def search_folders(self, parent_id:str, parent_name:str):
         """
@@ -156,10 +161,7 @@ class DriveReader():
                 elif command == "quit" or command == "exit":
                     sys.exit()
                 elif command == "search":
-                    while True:
-                        self.categorize_folders_from_drive()
-                        print("Done")
-                        time.sleep(3)
+                    self.categorize_folders_from_drive()
                 elif command == "run":
                     time.sleep(100)
                 else:
