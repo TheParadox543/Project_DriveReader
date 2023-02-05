@@ -29,6 +29,13 @@ class DriveReader():
         # Take user's name.
         user = input("Enter your credentials:")
 
+        # Check if the user is in the database of authorized users.
+        with open("authorized.json") as file:
+            json_obj = json.load(file)
+        if user not in json_obj["authors"]:
+            print("Invalid user")
+            return
+
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
         if os.path.exists(f"{user}.json"):
@@ -155,13 +162,18 @@ class DriveReader():
                         time.sleep(3)
                 elif command == "run":
                     time.sleep(100)
+                else:
+                    print("Invalid Command")
         except KeyboardInterrupt:
             print("\n\nExiting the program by interrupt.")
 
 
 if __name__ == '__main__':
     DR = DriveReader()
-    try:
-        DR.main()
-    except KeyboardInterrupt:
-        print("\n\nExiting program by interrput.")
+    if DR.creds and DR.creds.valid:
+        try:
+            DR.main()
+        except KeyboardInterrupt:
+            print("\n\nExiting program by interrput.")
+    else:
+        sys.exit()
