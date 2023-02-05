@@ -114,7 +114,7 @@ class DriveReader():
                         with open("data.json", "w") as f:
                             json_obj = json.dumps(files, indent=4)
                             f.write(json_obj)
-                        time.sleep(10)
+                        time.sleep(3)
                     else:
                         print("Could not find the folder.")
 
@@ -158,31 +158,36 @@ class DriveReader():
 
     def categorize_data(self, teacher_name:str, file_name:str):
         """Categorize the data from files to a database."""
+
+        # Take data from file name and verify if it is in proper format.
         name_data = file_name.split("_", 2)
         if len(name_data) < 3:
             return
+
         year, type, name = name_data
+
+        # Take data from the file.
         with open("database.json", "r") as file:
             try:
                 data = json.load(file)
             except json.decoder.JSONDecodeError:
                 data = {}
-        teacher_data = data.get(teacher_name)
-        if teacher_data is None:
-            data.update({teacher_name:{year:{type:1}}})
-        else:
-            if teacher_data.get(year) is not None:
-                year_data = teacher_data[year]
-                if year_data.get(type) is not None:
-                    count = year_data[type]
-                    year_data.update({type:count+1})
-                else:
-                    year_data.update({type:1})
-                teacher_data.update({year:year_data})
-            else:
-                teacher_data.update({year:{type:1}})
-            data.update({teacher_name:teacher_data})
-        print(data)
+
+        # Extract teacher data, supply if not already there.
+        teacher_data = data.get(teacher_name, {year:{type:0}})
+
+        # Extract year data of a teacher, supply if not already there.
+        year_data = teacher_data.get(year, {type:0})
+
+        # Take a count of how many papers of a type are there in a year.
+        count = year_data.get(type, 0)
+
+        # Update all the data as required.
+        year_data.update({type:count+1})
+        teacher_data.update({year:year_data})
+        data.update({teacher_name:teacher_data})
+
+        # Write to json file.
         with open("database.json", "w+") as file:
             json_send_obj = json.dumps(data, indent=4)
             file.write(json_send_obj)
