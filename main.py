@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os.path
 import json
+import re
 import sys
 import time
 
@@ -15,6 +16,9 @@ from googleapiclient.errors import HttpError
 SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
 ]
+
+#TODO prompt if file name wrong
+#TODO multiple versions of the same file
 
 class DriveReader():
     """This project aims to read files in a drive and categorize them."""
@@ -165,6 +169,8 @@ class DriveReader():
             return
 
         year, type, name = name_data
+        if re.search("[a-zA-Z]", year) or re.search("\d", type):
+            return
 
         # Take data from the file.
         with open("database.json", "r") as file:
