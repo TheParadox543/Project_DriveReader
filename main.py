@@ -61,6 +61,19 @@ class DriveReader():
         # Create a connection with drive.
         self.service = build("drive", "v3", credentials=self.creds)
 
+    def search_id_folder(self, name:str):
+        try:
+            response = self.service.files().list(
+                q=f"name contains '{name}'",
+                spaces="drive",
+                fields="files(name, id, parents)"
+            ).execute()
+            for file in response.get("files", []):
+                print("File found", file)
+
+        except HttpError:
+            print("Error occured.")
+
     def search_for_all_folders(self):
         """A function to identify all folders in a drive."""
         try:
@@ -69,7 +82,6 @@ class DriveReader():
             while True:
                 # Search for all folders in drive.
                 response:dict = self.service.files().list(
-                    corpora="user",
                     q="mimeType='application/vnd.google-apps.folder'",
                     spaces='drive',
                     fields="nextPageToken, files(name, parents)",
@@ -99,12 +111,14 @@ class DriveReader():
                 files = []
 
                 response:dict = self.service.files().list(
-                    q="name contains 'Project DriveReader'",
+                    q="name contains 'Project DriveReader' and \
+                        mimeType='application/vnd.google-apps.folder'",
                     spaces='drive',
-                    fields='nextPageToken, files(id)'
+                    fields='nextPageToken, files(id, name, parents)'
                 ).execute()
                 try:
                     main_folder_id = response.get("files")[0].get("id")
+                    # main_folder_id = "1YB805MsCxVaCmWuwB3jIewp5RNOKX65n"
                 except IndexError:
                     print("Could not find the folder.")
                     return
@@ -206,14 +220,15 @@ class DriveReader():
                 command = input("Enter command:")
                 if command == "Search all folders":
                     self.search_for_all_folders()
-                elif command == "quit" or command == "exit":
-                    sys.exit()
+                elif command.startswith("find"):
+                    print(command.split()[1])
+                    self.search_id_folder(command.split()[1])
                 elif command == "search" or command == "run":
                     self.categorize_folders_from_drive()
-                # elif command == "run":
-                #     time.sleep(100)
                 elif command == "data":
                     self.categorize_data("")
+                elif command == "quit" or command == "exit":
+                    sys.exit()
                 else:
                     print("Invalid Command")
         except KeyboardInterrupt:
