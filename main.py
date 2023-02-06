@@ -28,6 +28,15 @@ class DriveReader():
         """Initialize the class."""
         self.creds = None
         self.validate_user()
+        with open("database.json", "r") as file:
+            try:
+                self.database = json.load(file)
+            except json.decoder.JSONDecodeError:
+                self.database = {}
+        with open("data.json", "r") as file:
+            self.data = json.load(file)
+        self.data_new = {}
+        self.database_new = {}
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
@@ -108,8 +117,6 @@ class DriveReader():
         """Search for folders and files in the Project folder."""
         while True:
             try:
-                files = []
-
                 response:dict = self.service.files().list(
                     q="name contains 'Project DriveReader' and \
                         mimeType='application/vnd.google-apps.folder'",
@@ -125,14 +132,24 @@ class DriveReader():
 
                 else:
                     if main_folder_id is not None:
-                        with open("database.json", "w") as file:
-                            json_obj = json.dumps({})
-                            file.write(json_obj)
-                        files = self.search_folders(main_folder_id, 
+                        self.database_new = {}
+                        self.data_new = {}
+                        self.data_new = self.search_folders(main_folder_id, 
                                                     "Project DriveReader")
-                        with open("data.json", "w") as f:
-                            json_obj = json.dumps(files, indent=4)
-                            f.write(json_obj)
+
+                        if self.database_new != self.database:
+                            # print("Database updated.")
+                            self.database = self.database_new
+                            with open("database.json", "w") as file:
+                                json_obj = json.dumps(self.database_new, indent=4)
+                                file.write(json_obj)
+
+                        if self.data_new != self.data:
+                            # print("Data updated.")
+                            self.data = self.data_new
+                            with open("data.json", "w") as f:
+                                json_obj = json.dumps(self.data_new, indent=4)
+                                f.write(json_obj)
                         time.sleep(3)
                     else:
                         print("Could not find the folder.")
@@ -187,15 +204,8 @@ class DriveReader():
         if re.search("[a-zA-Z]", year) or re.search("\d", type):
             return
 
-        # Take data from the file.
-        with open("database.json", "r") as file:
-            try:
-                data = json.load(file)
-            except json.decoder.JSONDecodeError:
-                data = {}
-
         # Extract teacher data, supply if not already there.
-        teacher_data = data.get(teacher_name, {year:{type:0}})
+        teacher_data = self.database_new.get(teacher_name, {year:{type:0}})
 
         # Extract year data of a teacher, supply if not already there.
         year_data = teacher_data.get(year, {type:0})
@@ -206,12 +216,7 @@ class DriveReader():
         # Update all the data as required.
         year_data.update({type:count+1})
         teacher_data.update({year:year_data})
-        data.update({teacher_name:teacher_data})
-
-        # Write to json file.
-        with open("database.json", "w+") as file:
-            json_send_obj = json.dumps(data, indent=4)
-            file.write(json_send_obj)
+        self.database_new.update({teacher_name:teacher_data})
 
     def main(self):
         """The main function of the class."""
