@@ -19,6 +19,7 @@ SCOPES = [
 
 #TODO prompt if file name wrong
 #TODO multiple versions of the same file
+#TODO cosolidate yearwise of each department 
 
 class DriveReader():
     """This project aims to read files in a drive and categorize them."""
