@@ -34,9 +34,12 @@ class DriveReader():
             except json.decoder.JSONDecodeError:
                 self.database = {}
         with open("data.json", "r") as file:
-            self.data = json.load(file)
-        self.data_new = {}
-        self.database_new = {}
+            try:
+                self.data = json.load(file)
+            except json.decoder.JSONDecodeError:
+                self.data = {}
+        # self.data_new = {}
+        # self.database_new = {}
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
@@ -70,7 +73,10 @@ class DriveReader():
         # Create a connection with drive.
         self.service = build("drive", "v3", credentials=self.creds)
 
-    def search_id_folder(self, name:str):
+    def search_id_file(self, name:str):
+        """Search for a specific file or folder by its given name.
+        
+        - name:str: The name of the file to search for."""
         try:
             response = self.service.files().list(
                 q=f"name contains '{name}'",
@@ -136,20 +142,7 @@ class DriveReader():
                         self.data_new = {}
                         self.data_new = self.search_folders(main_folder_id, 
                                                     "Project DriveReader")
-
-                        if self.database_new != self.database:
-                            # print("Database updated.")
-                            self.database = self.database_new
-                            with open("database.json", "w") as file:
-                                json_obj = json.dumps(self.database_new, indent=4)
-                                file.write(json_obj)
-
-                        if self.data_new != self.data:
-                            # print("Data updated.")
-                            self.data = self.data_new
-                            with open("data.json", "w") as f:
-                                json_obj = json.dumps(self.data_new, indent=4)
-                                f.write(json_obj)
+                        self.update_json_files()
                         time.sleep(3)
                     else:
                         print("Could not find the folder.")
@@ -218,6 +211,22 @@ class DriveReader():
         teacher_data.update({year:year_data})
         self.database_new.update({teacher_name:teacher_data})
 
+    def update_json_files(self):
+        """Update the json files if there is a change in data."""
+        if self.database_new != self.database:
+            # print("Database updated.")
+            self.database = self.database_new
+            with open("database.json", "w") as file:
+                json_obj = json.dumps(self.database_new, indent=4)
+                file.write(json_obj)
+
+        if self.data_new != self.data:
+            # print("Data updated.")
+            self.data = self.data_new
+            with open("data.json", "w") as f:
+                json_obj = json.dumps(self.data_new, indent=4)
+                f.write(json_obj)
+
     def main(self):
         """The main function of the class."""
         try:
@@ -227,7 +236,7 @@ class DriveReader():
                     self.search_for_all_folders()
                 elif command.startswith("find"):
                     print(command.split()[1])
-                    self.search_id_folder(command.split()[1])
+                    self.search_id_file(command.split()[1])
                 elif command == "search" or command == "run":
                     self.categorize_folders_from_drive()
                 elif command == "data":
@@ -240,7 +249,7 @@ class DriveReader():
             print("\n\nExiting the program by interrupt.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         DR = DriveReader()
     except KeyboardInterrupt:
