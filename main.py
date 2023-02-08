@@ -17,7 +17,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
 ]
 
-#TODO prompt if file name wrong
 #TODO multiple versions of the same file
 
 class DriveReader():
@@ -44,7 +43,8 @@ class DriveReader():
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
         # Take user's name.
-        user = input("Enter your credentials:")
+        # user = input("Enter your credentials:")
+        user = "Samuel"
 
         # Check if the user is in the database of authorized users.
         with open("authorized.json") as file:
@@ -104,6 +104,7 @@ class DriveReader():
                     pageToken=page_token
                 ).execute()
                 file: dict
+
                 # Loop through all files in the response
                 for file in response.get("files", []):
                     # Process change
@@ -123,6 +124,8 @@ class DriveReader():
         """Search for folders and files in the Project folder."""
         # while True:
         try:
+            # * Search for folder "Project DriveReader". If files are in a 
+            # * different folder, change the query.
             response:dict = self.service.files().list(
                 q="name contains 'Project DriveReader' and \
                     mimeType='application/vnd.google-apps.folder'",
@@ -140,6 +143,7 @@ class DriveReader():
                 if main_folder_id is not None:
                     self.database_new = {}
                     self.data_new = {}
+                    # Run the program through the recursive function.
                     self.data_new = self.search_folders(main_folder_id, 
                                                 "Project DriveReader")
                     self.update_json_files()
@@ -154,6 +158,15 @@ class DriveReader():
         """
         A recursive function to keep listing all files and folders located
         inside of a folder.
+
+        Parameters
+        ---------
+        - parent_id`str`: The id of the parent folder.
+        - parent_name`str`: The name of the parent folder. 
+
+        Returns
+        -------
+        A dictionary with the file in the parent folder as key.
         """
         try:
             page_token = None
@@ -167,7 +180,8 @@ class DriveReader():
                 ).execute()
 
                 for file in response.get("files"):
-                    # print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
+                    # // print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
+                    # Check if the file is of folder type
                     if file.get('mimeType')[28:] == "folder":
                         returned_folder = self.search_folders(file.get("id"), 
                                                               file.get("name"))
@@ -185,7 +199,14 @@ class DriveReader():
         return {parent_name:files}
 
     def categorize_data(self, teacher_name:str, file_name:str):
-        """Categorize the data from files to a database."""
+        """Categorize the data from files to a database.
+
+        Parameters
+        ----------
+        - teacher_name`str`: The name of the folder to associate in the database.
+        - file_name`str`: The name of the file extracted from the file name if
+                        it is given in the proper format.
+        """
 
         # Take data from file name and verify if it is in proper format.
         name_data = file_name.split("_", 2)
