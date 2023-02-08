@@ -280,35 +280,32 @@ class DriveReader():
 
     def main(self):
         """The main function of the class."""
-        try:
-            # while True:
-                # command = input("Enter command:")
-                # if command == "Search all folders":
-                #     self.search_for_all_folders()
-                # elif command.startswith("find"):
-                #     print(command.split()[1])
-                #     self.search_id_file(command.split()[1])
-                # elif command == "search" or command == "run":
-            self.categorize_folders_from_drive()
-                # elif command == "data":
-                #     self.categorize_data("")
-                # elif command == "quit" or command == "exit":
-                #     sys.exit()
-                # else:
-                #     print("Invalid Command")
-        except KeyboardInterrupt:
-            print("\n\nExiting the program by interrupt.")
+        # while True:
+            # command = input("Enter command:")
+            # if command == "Search all folders":
+            #     self.search_for_all_folders()
+            # elif command.startswith("find"):
+            #     print(command.split()[1])
+            #     self.search_id_file(command.split()[1])
+            # elif command == "search" or command == "run":
+        self.categorize_folders_from_drive()
+            # elif command == "data":
+            #     self.categorize_data("")
+            # elif command == "quit" or command == "exit":
+            #     sys.exit()
+            # else:
+            #     print("Invalid Command")
 
 
 if __name__ == "__main__":
     try:
         DR = DriveReader()
     except KeyboardInterrupt:
-        print("\n\nExiting program by interrput.")
+        print("\n\nExiting program by interrupt.")
     if DR.creds and DR.creds.valid:
         try:
             DR.main()
         except KeyboardInterrupt:
-            print("\n\nExiting program by interrput.")
+            print("\n\nExiting program by interrupt.")
     else:
         sys.exit()
