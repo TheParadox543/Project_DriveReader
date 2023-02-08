@@ -121,35 +121,34 @@ class DriveReader():
 
     def categorize_folders_from_drive(self):
         """Search for folders and files in the Project folder."""
-        while True:
+        # while True:
+        try:
+            response:dict = self.service.files().list(
+                q="name contains 'Project DriveReader' and \
+                    mimeType='application/vnd.google-apps.folder'",
+                spaces='drive',
+                fields='nextPageToken, files(id, name, parents)'
+            ).execute()
             try:
-                response:dict = self.service.files().list(
-                    q="name contains 'Project DriveReader' and \
-                        mimeType='application/vnd.google-apps.folder'",
-                    spaces='drive',
-                    fields='nextPageToken, files(id, name, parents)'
-                ).execute()
-                try:
-                    main_folder_id = response.get("files")[0].get("id")
-                    # main_folder_id = "1YB805MsCxVaCmWuwB3jIewp5RNOKX65n"
-                except IndexError:
-                    print("Could not find the folder.")
-                    return
+                main_folder_id = response.get("files")[0].get("id")
+                # main_folder_id = "1YB805MsCxVaCmWuwB3jIewp5RNOKX65n"
+            except IndexError:
+                print("Could not find the folder.")
+                return
 
+            else:
+                if main_folder_id is not None:
+                    self.database_new = {}
+                    self.data_new = {}
+                    self.data_new = self.search_folders(main_folder_id, 
+                                                "Project DriveReader")
+                    self.update_json_files()
+                    time.sleep(3)
                 else:
-                    if main_folder_id is not None:
-                        self.database_new = {}
-                        self.data_new = {}
-                        self.data_new = self.search_folders(main_folder_id, 
-                                                    "Project DriveReader")
-                        self.update_json_files()
-                        time.sleep(3)
-                    else:
-                        print("Could not find the folder.")
+                    print("Could not find the folder.")
 
-            except HttpError as error:
-                print(F'An error occurred: {error}')
-                files = None
+        except HttpError as error:
+            print(F'An error occurred: {error}')
 
     def search_folders(self, parent_id:str, parent_name:str):
         """
@@ -227,24 +226,49 @@ class DriveReader():
                 json_obj = json.dumps(self.data_new, indent=4)
                 f.write(json_obj)
 
+        with open("department.json", "r") as file:
+            text = json.load(file)
+            self.dept = {}
+            for name in self.database_new:
+                if name in text:
+                    dept_name = text.get(name, "Unkown")
+                    dept_data = self.dept.get(dept_name, {"0":{"0":0}})
+                    for year in self.database_new[name]:
+                        year_data = dept_data.get(year, {"0":"0"})
+                        for type in self.database_new[name][year]:
+                            count = year_data.get(type, 0)
+                            count += self.database[name][year][type]
+                            year_data.update({type: count})
+                            if "0" in year_data:
+                                year_data.pop('0')
+                        dept_data.update({year:year_data})
+                        if "0" in dept_data:
+                            dept_data.pop("0")
+                    self.dept.update({dept_name:dept_data})
+                    if "0" in self.dept:
+                        self.dept.pop("0")
+            with open("dept.json", "w") as file_write:
+                json_obj = json.dumps(self.dept, indent=4)
+                file_write.write(json_obj)
+
     def main(self):
         """The main function of the class."""
         try:
-            while True:
-                command = input("Enter command:")
-                if command == "Search all folders":
-                    self.search_for_all_folders()
-                elif command.startswith("find"):
-                    print(command.split()[1])
-                    self.search_id_file(command.split()[1])
-                elif command == "search" or command == "run":
-                    self.categorize_folders_from_drive()
-                elif command == "data":
-                    self.categorize_data("")
-                elif command == "quit" or command == "exit":
-                    sys.exit()
-                else:
-                    print("Invalid Command")
+            # while True:
+                # command = input("Enter command:")
+                # if command == "Search all folders":
+                #     self.search_for_all_folders()
+                # elif command.startswith("find"):
+                #     print(command.split()[1])
+                #     self.search_id_file(command.split()[1])
+                # elif command == "search" or command == "run":
+            self.categorize_folders_from_drive()
+                # elif command == "data":
+                #     self.categorize_data("")
+                # elif command == "quit" or command == "exit":
+                #     sys.exit()
+                # else:
+                #     print("Invalid Command")
         except KeyboardInterrupt:
             print("\n\nExiting the program by interrupt.")
 
