@@ -44,7 +44,7 @@ class DriveReader():
         """Validate the program if the user who runs it is registered."""
         # Take user's name.
         # user = input("Enter your credentials:")
-        user = "Samuel"
+        user = "sam_christ"
 
         # Check if the user is in the database of authorized users.
         with open("authorized.json") as file:
@@ -124,10 +124,11 @@ class DriveReader():
         """Search for folders and files in the Project folder."""
         # while True:
         try:
-            # * Search for folder "Project DriveReader". If files are in a 
+            # * Search for folder "CUCS - Faculty". If files are in a 
             # * different folder, change the query.
+            main_folder_name = "CUCS - Faculty"
             response:dict = self.service.files().list(
-                q="name contains 'Project DriveReader' and \
+                q=f"name contains '{main_folder_name}' and \
                     mimeType='application/vnd.google-apps.folder'",
                 spaces='drive',
                 fields='nextPageToken, files(id, name, parents)'
@@ -145,7 +146,7 @@ class DriveReader():
                     self.data_new = {}
                     # Run the program through the recursive function.
                     self.data_new = self.search_folders(main_folder_id, 
-                                                "Project DriveReader")
+                                                main_folder_name)
                     self.update_json_files()
                     time.sleep(3)
                 else:
@@ -209,12 +210,14 @@ class DriveReader():
         """
 
         # Take data from file name and verify if it is in proper format.
-        name_data = file_name.split("_", 2)
+        break_point = file_name[4]
+        name_data = file_name.split(break_point, 2)
         if len(name_data) < 3:
             self.exempt.append((file_name, teacher_name))
             return
 
         year, type, name = name_data
+        type = type.upper()
         if re.search("[a-zA-Z]", year) or re.search("\d", type):
             self.exempt.append((file_name, teacher_name))
             return
