@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import os.path
 import json
 import re
@@ -48,12 +49,23 @@ class DriveReader():
         # user = input("Enter your credentials:")
         user = "sam_christ"
 
-        # Check if the user is in the database of authorized users.
-        with open("authorized.json") as file:
-            json_obj = json.load(file)
-        if user not in json_obj["authors"]:
-            print("Invalid user")
-            return
+        # # * Check if the user is in the database of authorized users.
+        # with open("authorized.json") as file:
+        #     json_obj = json.load(file)
+        # if user not in json_obj["authors"]:
+        #     print("Invalid user")
+        #     return
+
+        # * If using in colab, write data to a file to read it.
+        # token_data = {
+        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJyAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0qHaw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZuRCQhdNrvsJeal5xTw0166", 
+        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4", 
+        #     "token_uri": "https://oauth2.googleapis.com/token", 
+        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com", 
+        #     "client_secret": "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", 
+        #     "scopes": ["https://www.googleapis.com/auth/drive.metadata.readonly"], 
+        #     "expiry": "2023-02-09T11:11:14.527394Z"
+        # }
 
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
@@ -65,6 +77,18 @@ class DriveReader():
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
+                # * If using in colab, write data to a file to read it.
+                # credential_data ={
+                #     "installed": {
+                #         "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com",
+                #         "project_id":"drivereader-376706",
+                #         "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+                #         "token_uri":"https://oauth2.googleapis.com/token",
+                #         "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+                #         "client_secret":"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",
+                #         "redirect_uris":["http://localhost"]
+                #     }
+                # }
                 flow = InstalledAppFlow.from_client_secrets_file(
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
@@ -285,6 +309,8 @@ class DriveReader():
         with open("exempt.json", "w") as file:
             json_obj = json.dumps(self.exempt, indent=4)
             file.write(json_obj)
+
+        os.system("start NOTEPAD.EXE database.json")
 
     def main(self):
         """The main function of the class."""
