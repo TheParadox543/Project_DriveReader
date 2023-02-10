@@ -26,19 +26,21 @@ class DriveReader():
         """Initialize the class."""
         self.creds = None
         self.validate_user()
-        with open("database.json", "r") as file:
-            try:
+        try:
+            with open("database.json", "r") as file:
                 self.database = json.load(file)
-            except json.decoder.JSONDecodeError:
-                self.database = {}
-        with open("data.json", "r") as file:
-            try:
+        except json.decoder.JSONDecodeError:
+            self.database = {}
+        except FileNotFoundError:
+            self.database = {}
+        try:
+            with open("base_data.json", "r") as file:
                 self.data = json.load(file)
-            except json.decoder.JSONDecodeError:
-                self.data = {}
+        except json.decoder.JSONDecodeError:
+            self.data = {}
+        except FileNotFoundError:
+            self.data = {}
         self.exempt = []
-        # self.data_new = {}
-        # self.database_new = {}
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
@@ -238,48 +240,51 @@ class DriveReader():
 
     def update_json_files(self):
         """Update the json files if there is a change in data."""
-        if self.database_new != self.database:
-            # print("Database updated.")
-            self.database = self.database_new
-            with open("database.json", "w") as file:
-                json_obj = json.dumps(self.database_new, indent=4)
-                file.write(json_obj)
+        # if self.database_new != self.database:
+        #     # print("Database updated.")
+        self.database = self.database_new
+        with open("database.json", "w") as file:
+            json_obj = json.dumps(self.database_new, indent=4)
+            file.write(json_obj)
 
-            with open("department.json", "r") as file:
+        try:
+            with open("dept_name_list.json", "r") as file:
                 text = json.load(file)
-                self.dept = {}
-                for name in self.database_new:
-                    if name in text:
-                        dept_name = text.get(name, "Unkown")
-                        dept_data = self.dept.get(dept_name, {"0":{"0":0}})
-                        for year in self.database_new[name]:
-                            year_data = dept_data.get(year, {"0":"0"})
-                            for type in self.database_new[name][year]:
-                                count = year_data.get(type, 0)
-                                count += self.database[name][year][type]
-                                year_data.update({type: count})
-                                if "0" in year_data:
-                                    year_data.pop('0')
-                            dept_data.update({year:year_data})
-                            if "0" in dept_data:
-                                dept_data.pop("0")
-                        self.dept.update({dept_name:dept_data})
-                        if "0" in self.dept:
-                            self.dept.pop("0")
-                with open("dept.json", "w") as file_write:
-                    json_obj = json.dumps(self.dept, indent=4)
-                    file_write.write(json_obj)
+        except FileNotFoundError:
+            text = {"None": "None"}
+        self.dept_json = {}
+        for name in self.database_new:
+            if name in text:
+                dept_name = text.get(name, "Unkown")
+                dept_data = self.dept_json.get(dept_name, {"0":{"0":0}})
+                for year in self.database_new[name]:
+                    year_data = dept_data.get(year, {"0":"0"})
+                    for type in self.database_new[name][year]:
+                        count = year_data.get(type, 0)
+                        count += self.database[name][year][type]
+                        year_data.update({type: count})
+                        if "0" in year_data:
+                            year_data.pop('0')
+                    dept_data.update({year:year_data})
+                    if "0" in dept_data:
+                        dept_data.pop("0")
+                self.dept_json.update({dept_name:dept_data})
+                if "0" in self.dept_json:
+                    self.dept.pop("0")
+        with open("dept_data.json", "w") as file_write:
+            json_obj = json.dumps(self.dept_json, indent=4)
+            file_write.write(json_obj)
 
-        if self.data_new != self.data:
-            # print("Data updated.")
-            self.data = self.data_new
-            with open("data.json", "w") as f:
-                json_obj = json.dumps(self.data_new, indent=4)
-                f.write(json_obj)
+        # if self.data_new != self.data:
+        #     # print("Data updated.")
+        self.data = self.data_new
+        with open("base_data.json", "w") as f:
+            json_obj = json.dumps(self.data_new, indent=4)
+            f.write(json_obj)
 
-            with open("exempt.json", "w") as file:
-                json_obj = json.dumps(self.exempt, indent=4)
-                file.write(json_obj)
+        with open("exempt.json", "w") as file:
+            json_obj = json.dumps(self.exempt, indent=4)
+            file.write(json_obj)
 
     def main(self):
         """The main function of the class."""
