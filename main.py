@@ -7,6 +7,7 @@ import re
 import sys
 import time
 
+# Install necessary libraries with pip install -r requirements.txt
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -173,8 +174,32 @@ class DriveReader():
                     # Run the program through the recursive function.
                     self.data_new = self.search_folders(main_folder_id, 
                                                 main_folder_name)
+                    # self.update_json_files()
+                else:
+                    print("Could not find the folder.")
+
+            main_folder_name = "CUCS - Events"
+            response:dict = self.service.files().list(
+                q=f"name contains '{main_folder_name}' and \
+                    mimeType='application/vnd.google-apps.folder'",
+                spaces='drive',
+                fields='nextPageToken, files(id, name, parents)'
+            ).execute()
+            try:
+                main_folder_id = response.get("files")[0].get("id")
+                # main_folder_id = "1YB805MsCxVaCmWuwB3jIewp5RNOKX65n"
+            except IndexError:
+                print("Could not find the folder.")
+                return
+
+            else:
+                if main_folder_id is not None:
+                    # self.database_new = {}
+                    # self.data_new = {}
+                    # Run the program through the recursive function.
+                    self.data_new.update(self.search_folders(main_folder_id, 
+                                                main_folder_name))
                     self.update_json_files()
-                    time.sleep(3)
                 else:
                     print("Could not find the folder.")
 
@@ -310,7 +335,7 @@ class DriveReader():
             json_obj = json.dumps(self.exempt, indent=4)
             file.write(json_obj)
 
-        os.system("start NOTEPAD.EXE database.json")
+        # os.system("start NOTEPAD.EXE database.json")
 
     def main(self):
         """The main function of the class."""
