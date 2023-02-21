@@ -1,2 +1,3 @@
 /drivevenv
+/__pycache__
 *.json

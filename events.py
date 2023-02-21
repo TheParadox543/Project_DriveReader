@@ -101,9 +101,33 @@ class DriveReader():
         except HttpError as error:
             print(f"An error occurred: {error}")
 
+    def classify_file(self, name:str):
+        """Classify the file in categories based on naming structure."""
+        self.data = {}
+        self.exempt = []
+        try:
+            with open("classification.json", "r") as file:
+                self.classification = json.load(file)
+        except FileNotFoundError:
+            self.classification = {}
+        except json.decoder.JSONDecodeError:
+            self.classification = {}
+
+        try:
+            date, category, extra = name.split("_", 2)
+        except ValueError:
+            self.exempt.append(name)
+        else:
+            try:
+                year, month, day = int(date[:4]), int(date[4:6]), int(date[6:])
+                print(year, month, day)
+            except ValueError:
+                return
+
     def main(self):
         """The main function of the class."""
-        self.sort_files_in_folder()
+        # self.sort_files_in_folder()
+        self.classify_file("20220730_cprs_rv_1.pdf")
 
 
 if __name__ == "__main__":
