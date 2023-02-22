@@ -32,10 +32,15 @@ class DriveReader():
 
         # * If using in colab, write data to a file to read it.
         # token_data = {
-        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJyAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0qHaw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZuRCQhdNrvsJeal5xTw0166", 
-        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4", 
+        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJ
+        # yAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0q
+        # Haw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZ
+        # uRCQhdNrvsJeal5xTw0166", 
+        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-
+        # hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4", 
         #     "token_uri": "https://oauth2.googleapis.com/token", 
-        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com", 
+        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.
+        # googleusercontent.com", 
         #     "client_secret": "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", 
         #     "scopes": ["https://www.googleapis.com/auth/drive.metadata.readonly"], 
         #     "expiry": "2023-02-09T11:11:14.527394Z"
@@ -54,11 +59,13 @@ class DriveReader():
                 # * If using in colab, write data to a file to read it.
                 # credential_data ={
                 #     "installed": {
-                #         "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com",
+                #         "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3
+                # dvb7beg.apps.googleusercontent.com",
                 #         "project_id":"drivereader-376706",
                 #         "auth_uri":"https://accounts.google.com/o/oauth2/auth",
                 #         "token_uri":"https://oauth2.googleapis.com/token",
-                #         "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+                #         "auth_provider_x509_cert_url":"https://www.googleapis
+                # .com/oauth2/v1/certs",
                 #         "client_secret":"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",
                 #         "redirect_uris":["http://localhost"]
                 #     }
@@ -74,7 +81,7 @@ class DriveReader():
         self.service = build("drive", "v3", credentials=self.creds)
 
     def search_folder(self):
-        """"""
+        """Search for a specific folder."""
         try:
             response = self.service.files().get(fileId=self.research_id).execute()
             print(response)
@@ -83,6 +90,8 @@ class DriveReader():
 
     def sort_files_in_folder(self):
         """Sort the files in the folder."""
+        self.data = {}
+        self.exempt = []
         try:
             page_token = None
             while True:
@@ -93,18 +102,26 @@ class DriveReader():
                 ).execute()
 
                 for file in response.get("files"):
-                    print(file)
+                    # print(file)
+                    if file.get("name") is not None:
+                        self.classify_file(file.get("name"))
                 page_token = response.get("nextPageToken", None)
 
                 if page_token is None:
                     break
+            with open("data.json", "w") as file:
+                data_obj = json.dumps(self.data, indent=4)
+                file.write(data_obj)
+            with open("exempt.json", "w") as file:
+                exempt_obj = json.dumps(self.exempt, indent=4)
+                file.write(exempt_obj)
         except HttpError as error:
             print(f"An error occurred: {error}")
 
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
-        self.data = {}
-        self.exempt = []
+        # self.data = {}
+        # self.exempt = []
         try:
             with open("classification.json", "r") as file:
                 self.classification = json.load(file)
@@ -119,15 +136,30 @@ class DriveReader():
             self.exempt.append(name)
         else:
             try:
-                year, month, day = int(date[:4]), int(date[4:6]), int(date[6:])
-                print(year, month, day)
+                year, month = int(date[:4]), int(date[4:6])
+                # print(year, month, day)
+                if month > 0 and month < 5:
+                    year = f"{year-1}-{year}"
+                else:
+                    year = f"{year}-{year+1}"
             except ValueError:
                 return
+            else:
+                # print(self.data)
+                year_data = self.data.get(year, {"0": {"0": 0}})
+                category_val = year_data.get(category, 0)
+                year_data.update({category: category_val + 1})
+                if "0" in year_data:
+                    year_data.pop("0")
+                self.data.update({year: year_data})
+                if "0" in self.data:
+                    self.data.pop("0")
+                # print(self.data)
 
     def main(self):
         """The main function of the class."""
-        # self.sort_files_in_folder()
-        self.classify_file("20220730_cprs_rv_1.pdf")
+        self.sort_files_in_folder()
+        # self.classify_file("20220730_cprs_rv_1.pdf")
 
 
 if __name__ == "__main__":
