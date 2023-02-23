@@ -27,6 +27,7 @@ class ExcelWorker():
     def __init__(self) -> None:
         """Initialize the class"""
         self.classification: dict[dict[str, str]] = {}
+        self.code_groups = {}
         self.read_classification_exl()
 
     def read_classification_exl(self):
@@ -45,6 +46,7 @@ class ExcelWorker():
                 code, name = row[0].value, row[1].value
                 if code is not None and name is not None:
                     ws_dict[code] = name
+                    self.code_groups[code] = worksheet.title
             self.classification.update({worksheet.title: ws_dict})
         with open("classification.json", "w") as file:
             class_obj = json.dumps(self.classification, indent=4)
@@ -59,6 +61,9 @@ class DriveReader():
 
     def __init__(self) -> None:
         """Initialize the class."""
+        self.excelWorker = ExcelWorker()
+        self.categories = self.excelWorker.classification
+        self.code_keys = self.excelWorker.code_groups
         self.creds = None
         self.research_id = "1-kD9F_NrWLANsFNWGih9r2Il9BoAvCsu"
         self.validate_user()
@@ -141,7 +146,12 @@ class DriveReader():
         """Classify the file in categories based on naming structure."""
         try:
             date, code, extra = name.split("_", 2)
+            code = code.upper()
+            if code not in self.code_keys:
+                raise KeyError
         except ValueError:
+            self.exempt.append(name)
+        except KeyError:
             self.exempt.append(name)
         else:
             try:
@@ -154,20 +164,23 @@ class DriveReader():
             except ValueError:
                 self.exempt.append(name)
             else:
-                year_data = self.data.get(year, {"0": {"0": 0}})
+                category = self.code_keys[code]
+                category_data = self.data.get(category, {"0": {"0": 0}})
+                year_data = category_data.get(year, {"0": 0})
                 code_val = year_data.get(code, 0)
                 year_data.update({code: code_val + 1})
                 if "0" in year_data:
                     year_data.pop("0")
-                self.data.update({year: year_data})
+                category_data.update({year: year_data})
+                if "0" in category_data: 
+                    category_data.pop("0")
+                self.data.update({category: category_data})
                 if "0" in self.data:
                     self.data.pop("0")
 
     def main(self):
         """The main function of the class."""
-        excelWorker = ExcelWorker()
-        categories = excelWorker.classification
-        for category in categories:
+        for category in self.categories:
             self.sort_files_in_folder(category)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
