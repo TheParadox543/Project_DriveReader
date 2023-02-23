@@ -114,7 +114,9 @@ class DriveReader():
                     for file in response.get("files"):
                         # print(file)
                         if file.get("name") is not None:
-                            self.classify_file(file.get("name"))
+                            if_failed = self.classify_file(file.get("name"))
+                            if if_failed is not None:
+                                self.exempt.append((if_failed, folder_name))
                     page_token = response.get("nextPageToken", None)
 
                     if page_token is None:
@@ -151,9 +153,9 @@ class DriveReader():
             if code not in self.code_keys:
                 raise KeyError
         except ValueError:
-            self.exempt.append(name)
+            return name
         except KeyError:
-            self.exempt.append(name)
+            return name
         else:
             try:
                 year, month = int(date[:4]), int(date[4:6])
@@ -163,7 +165,7 @@ class DriveReader():
                 else:
                     year = f"{year}-{year+1}"
             except ValueError:
-                self.exempt.append(name)
+                return name
             else:
                 category = self.code_keys[code]
                 category_data = self.data.get(category, {"0": {"0": 0}})
