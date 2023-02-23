@@ -3,7 +3,6 @@ from __future__ import print_function
 import os
 import os.path
 import json
-import re
 import sys
 
 # Install necessary libraries with pip install -r requirements.txt
@@ -55,6 +54,12 @@ class ExcelWorker():
 
     def write_to_excel(self, drive_data: dict[str, dict[str, int]]):
         """Write data from the drive to the excel sheet."""
+        workbook = Workbook()
+        workbook.active.title = "exempted"
+        for category in drive_data:
+            worksheet = workbook.create_sheet(category, -1)
+        workbook.save("categorized.xlsx")
+
 
 class DriveReader():
     """This project aims to read files in a drive and categorize them."""
@@ -185,6 +190,7 @@ class DriveReader():
         """The main function of the class."""
         for category in self.categories:
             self.sort_files_in_folder(category)
+        self.excelWorker.write_to_excel(self.data)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
 
