@@ -26,7 +26,7 @@ class ExcelWorker():
 
     def __init__(self) -> None:
         """Initialize the class"""
-        self.classification: list[dict[str, str]] = []
+        self.classification: dict[dict[str, str]] = {}
         self.read_classification_exl()
 
     def read_classification_exl(self):
@@ -45,7 +45,7 @@ class ExcelWorker():
                 code, name = row[0].value, row[1].value
                 if code is not None and name is not None:
                     ws_dict[code] = name
-            self.classification.append({worksheet.title: ws_dict})
+            self.classification.update({worksheet.title: ws_dict})
         with open("classification.json", "w") as file:
             class_obj = json.dumps(self.classification, indent=4)
             file.write(class_obj)
@@ -65,7 +65,6 @@ class DriveReader():
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
-
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
         if os.path.exists("token.json"):
@@ -79,7 +78,7 @@ class DriveReader():
                 flow = InstalledAppFlow.from_client_secrets_file(
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
+            # Save the credentials for the next run.
             with open("token.json", "w") as token:
                 token.write(self.creds.to_json())
 
@@ -92,28 +91,32 @@ class DriveReader():
 
     def sort_files_in_folder(self, category_name: str):
         """Sort the files in the folder."""
-        
-        try:
-            page_token = None
-            while True:
-                # Search for all files with the folder as parent.
-                response = self.service.files().list(
-                    q=f"'{self.research_id}' in parents and trashed = false",
-                    spaces='drive',
-                    fields='nextPageToken, files(name)'
-                ).execute()
+        folders = self.search_folder(category_name)
+        if folders is None or folders == []:
+            return
+        for folder in folders:
+            folder_id, folder_name = folder.get("id"), folder.get("name")
+            try:
+                page_token = None
+                while True:
+                    # Search for all files with the folder as parent.
+                    response = self.service.files().list(
+                        q=f"'{folder_id}' in parents and trashed = false",
+                        spaces='drive',
+                        fields='nextPageToken, files(name)'
+                    ).execute()
 
-                for file in response.get("files"):
-                    # print(file)
-                    if file.get("name") is not None:
-                        self.classify_file(file.get("name"))
-                page_token = response.get("nextPageToken", None)
+                    for file in response.get("files"):
+                        # print(file)
+                        if file.get("name") is not None:
+                            self.classify_file(file.get("name"))
+                    page_token = response.get("nextPageToken", None)
 
-                if page_token is None:
-                    break
+                    if page_token is None:
+                        break
 
-        except HttpError as error:
-            print(f"An error occurred: {error}")
+            except HttpError as error:
+                print(f"An error occurred: {error}")
 
         else:
             with open("data.json", "w") as file:
@@ -129,20 +132,13 @@ class DriveReader():
             response = self.service.files().list(
                 q=f"name contains '{category_name}' and mimeType = 'application/vnd.google-apps.folder'"
             ).execute()
-            print(response)
+            return response.get("files", None)
         except HttpError as error:
             print(f"An error occurred: {error}")
+            return None
 
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
-        # try:
-        #     with open("classification.json", "r") as file:
-        #         self.classification = json.load(file)
-        # except FileNotFoundError:
-        #     self.classification = {}
-        # except json.decoder.JSONDecodeError:
-        #     self.classification = {}
-
         try:
             date, code, extra = name.split("_", 2)
         except ValueError:
@@ -172,8 +168,7 @@ class DriveReader():
         excelWorker = ExcelWorker()
         categories = excelWorker.classification
         for category in categories:
-            print(category.keys)
-            # self.search_folder(category)
+            self.sort_files_in_folder(category)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
 
