@@ -171,26 +171,33 @@ class ExcelWorker():
 
     def __init__(self) -> None:
         """Initialize the class"""
-        self.classification = []
+        self.classification = list(dict())
         self.read_classification_exl()
 
     def read_classification_exl(self):
         """Read the classification categories."""
+        # Load the workbook, if not exit the program.
         try:
             self.workbook:Workbook = load_workbook("doc_classification.xlsx")
         except FileNotFoundError: 
             print("Classification file not found.")
             sys.exit()
         worksheet: Worksheet
+        # Loop through all sheets and categorize each code.
         for worksheet in self.workbook:
-            ws_dict = {worksheet.title: {}}
+            ws_dict = {}
             for row in worksheet.iter_rows(min_col=2, max_col=3):
-                print(row[0].value, row[1].value)
-            self.classification.append({worksheet.title: {}})
-            break
-        # print(self.classification)
+                code, name = row[0].value, row[1].value
+                if code is not None and name is not None:
+                    ws_dict[code] = name
+            self.classification.append({worksheet.title: ws_dict})
+        with open("classification.json", "w") as file:
+            class_obj = json.dumps(self.classification, indent=4)
+            file.write(class_obj)
+        return self.classification
 
 if __name__ == "__main__":
+    exl = ExcelWorker()
     # Driver Code
     # DR = DriveReader()
     # if DR.creds and DR.creds.valid:
@@ -200,4 +207,3 @@ if __name__ == "__main__":
     #         print("\n\nExiting program by interrupt.")
     # else:
     #     sys.exit()
-    exl = ExcelWorker()
