@@ -12,6 +12,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from openpyxl import load_workbook
+from openpyxl.workbook.workbook import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -163,14 +166,38 @@ class DriveReader():
         self.sort_files_in_folder()
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
+class ExcelWorker():
+    """The class that will handle interaction with the excel workbooks."""
+
+    def __init__(self) -> None:
+        """Initialize the class"""
+        self.classification = []
+        self.read_classification_exl()
+
+    def read_classification_exl(self):
+        """Read the classification categories."""
+        try:
+            self.workbook:Workbook = load_workbook("doc_classification.xlsx")
+        except FileNotFoundError: 
+            print("Classification file not found.")
+            sys.exit()
+        worksheet: Worksheet
+        for worksheet in self.workbook:
+            ws_dict = {worksheet.title: {}}
+            for row in worksheet.iter_rows(min_col=2, max_col=3):
+                print(row[0].value, row[1].value)
+            self.classification.append({worksheet.title: {}})
+            break
+        # print(self.classification)
 
 if __name__ == "__main__":
     # Driver Code
-    DR = DriveReader()
-    if DR.creds and DR.creds.valid:
-        try:
-            DR.main()
-        except KeyboardInterrupt:
-            print("\n\nExiting program by interrupt.")
-    else:
-        sys.exit()
+    # DR = DriveReader()
+    # if DR.creds and DR.creds.valid:
+    #     try:
+    #         DR.main()
+    #     except KeyboardInterrupt:
+    #         print("\n\nExiting program by interrupt.")
+    # else:
+    #     sys.exit()
+    exl = ExcelWorker()
