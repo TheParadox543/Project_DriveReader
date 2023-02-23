@@ -58,6 +58,9 @@ class ExcelWorker():
         workbook.active.title = "exempted"
         for category in drive_data:
             worksheet = workbook.create_sheet(category, -1)
+            category_data = drive_data[category]
+            for i, year in enumerate(category_data):
+                worksheet[f"A{i+1}"] = year
         workbook.save("categorized.xlsx")
 
 
