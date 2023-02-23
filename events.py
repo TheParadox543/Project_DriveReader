@@ -90,11 +90,14 @@ class DriveReader():
 
     def sort_files_in_folder(self):
         """Sort the files in the folder."""
+        # Set data empty and then start execution.
         self.data = {}
         self.exempt = []
+
         try:
             page_token = None
             while True:
+                # Search for all files with the folder as parent.
                 response = self.service.files().list(
                     q=f"'{self.research_id}' in parents and trashed = false",
                     spaces='drive',
@@ -109,26 +112,27 @@ class DriveReader():
 
                 if page_token is None:
                     break
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+
+        else:
             with open("data.json", "w") as file:
                 data_obj = json.dumps(self.data, indent=4)
                 file.write(data_obj)
             with open("exempt.json", "w") as file:
                 exempt_obj = json.dumps(self.exempt, indent=4)
                 file.write(exempt_obj)
-        except HttpError as error:
-            print(f"An error occurred: {error}")
 
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
-        # self.data = {}
-        # self.exempt = []
-        try:
-            with open("classification.json", "r") as file:
-                self.classification = json.load(file)
-        except FileNotFoundError:
-            self.classification = {}
-        except json.decoder.JSONDecodeError:
-            self.classification = {}
+        # try:
+        #     with open("classification.json", "r") as file:
+        #         self.classification = json.load(file)
+        # except FileNotFoundError:
+        #     self.classification = {}
+        # except json.decoder.JSONDecodeError:
+        #     self.classification = {}
 
         try:
             date, category, extra = name.split("_", 2)
@@ -143,9 +147,8 @@ class DriveReader():
                 else:
                     year = f"{year}-{year+1}"
             except ValueError:
-                return
+                self.exempt.append(name)
             else:
-                # print(self.data)
                 year_data = self.data.get(year, {"0": {"0": 0}})
                 category_val = year_data.get(category, 0)
                 year_data.update({category: category_val + 1})
@@ -154,7 +157,6 @@ class DriveReader():
                 self.data.update({year: year_data})
                 if "0" in self.data:
                     self.data.pop("0")
-                # print(self.data)
 
     def main(self):
         """The main function of the class."""
@@ -163,6 +165,7 @@ class DriveReader():
 
 
 if __name__ == "__main__":
+    # Driver Code
     DR = DriveReader()
     if DR.creds and DR.creds.valid:
         try:
