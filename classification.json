@@ -1,0 +1,83 @@
+{
+    "CDC": {
+        "SYLR": "Syllabus Revisions",
+        "COPL": "Course plan",
+        "FDBK": "Feedback",
+        "CCIS": "Cross cutting issues",
+        "LRNG": "LRNG needs",
+        "PEOC": "Program outcome",
+        "COUC": "Course Outcome",
+        "NEPR": "New program",
+        "VADC": "Value added courses",
+        "EMPL": "Employability",
+        "ENTR": "Enterpreneurship",
+        "SKDT": "Skill development",
+        "INTN": "Internship"
+    },
+    "TLEC": {
+        "STUI": "Student info",
+        "ORPR": "Orientation Program",
+        "ALSL": "Advanced learner / Slow Learners",
+        "ICT": "ict",
+        "ACHI": "Faculty achievements",
+        "EVTO": "Evaluation tool",
+        "CIAA": "CIA analysis",
+        "COPO": "CO attainment",
+        "REAN": "Result analysis"
+    },
+    "RESEARCH": {
+        "CPUB": "Conference Publication",
+        "CPRS": "Conference Presentation",
+        "CATT": "Conference Attended",
+        "CKEY": "Conference Keynote",
+        "CSCH": "Conference Session Chair",
+        "CCON": "Conference Convenor",
+        "SORG": "Seminar Organized",
+        "SATT": "Seminar Attended",
+        "JPUI": "Journal Publication-Indexed",
+        "JPUN": "Journal Publication-Non Indexed",
+        "BCHP": "Book Chapter",
+        "BOOK": "Book",
+        "PFIL": "Patent Filed",
+        "PGRA": "Patent Granted",
+        "RPIF": "Research Project - Internal Funding",
+        "RPEF": "Research Project - External Funding ",
+        "CONS": "Consultancy Project",
+        "MOUS": "Mou s",
+        "EXTA": "Extension activity"
+    },
+    "INFRASTRUCTURE": {
+        "ILIR": "Library resources",
+        "ILIF": "Lab facility",
+        "IECT": "E content"
+    },
+    "student_support": {
+        "FEEC": "Fee concession",
+        "SCHL": "Scholorship",
+        "CAPA": "Capability",
+        "INTL": "International program",
+        "PLAM": "Placements",
+        "PROG": "Progress to higher education",
+        "OTEX": "Other exams",
+        "ALCO": "Alumni contacts",
+        "ALME": "Alumni meet",
+        "ALSP": "Alumni support"
+    },
+    "DQAC": {
+        "PROG": "Cell programs",
+        "FDP": "fdp",
+        "QIP": "qip",
+        "WOSP": "workshop",
+        "PDP": "professional development program",
+        "SEMR": "seminar",
+        "SYMP": "symposium",
+        "CONF": "conference",
+        "FIIN": "finance incentives"
+    },
+    "Service_learning": {
+        "GENS": "Gender sensitization",
+        "HUVA": "Human values",
+        "PRET": "Professional ethics",
+        "BEPR": "Best practices"
+    }
+}

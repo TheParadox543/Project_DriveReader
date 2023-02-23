@@ -135,7 +135,8 @@ class DriveReader():
         """Search for a specific folder."""
         try:
             response = self.service.files().list(
-                q=f"name contains '{category_name}' and mimeType = 'application/vnd.google-apps.folder'"
+                q=f"name contains '{category_name}' and mimeType = \
+                    'application/vnd.google-apps.folder'"
             ).execute()
             return response.get("files", None)
         except HttpError as error:

@@ -1,3 +1,4 @@
 /drivevenv
 /__pycache__
-*.json
+credntials.json
+token.json
