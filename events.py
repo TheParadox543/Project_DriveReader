@@ -21,6 +21,39 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive.metadata"
 ]
 
+class ExcelWorker():
+    """The class that will handle interaction with the excel workbooks."""
+
+    def __init__(self) -> None:
+        """Initialize the class"""
+        self.classification: list[dict[str, str]] = []
+        self.read_classification_exl()
+
+    def read_classification_exl(self):
+        """Read the classification categories."""
+        # Load the workbook, if not exit the program.
+        try:
+            self.workbook:Workbook = load_workbook("doc_classification.xlsx")
+        except FileNotFoundError: 
+            print("Classification file not found.")
+            sys.exit()
+        worksheet: Worksheet
+        # Loop through all sheets and categorize each code.
+        for worksheet in self.workbook:
+            ws_dict = {}
+            for row in worksheet.iter_rows(min_col=2, max_col=3):
+                code, name = row[0].value, row[1].value
+                if code is not None and name is not None:
+                    ws_dict[code] = name
+            self.classification.append({worksheet.title: ws_dict})
+        with open("classification.json", "w") as file:
+            class_obj = json.dumps(self.classification, indent=4)
+            file.write(class_obj)
+        return self.classification
+
+    def write_to_excel(self, drive_data: dict[str, dict[str, int]]):
+        """Write data from the drive to the excel sheet."""
+
 class DriveReader():
     """This project aims to read files in a drive and categorize them."""
 
@@ -33,22 +66,6 @@ class DriveReader():
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
 
-        # * If using in colab, write data to a file to read it.
-        # token_data = {
-        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJ
-        # yAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0q
-        # Haw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZ
-        # uRCQhdNrvsJeal5xTw0166", 
-        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-
-        # hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4", 
-        #     "token_uri": "https://oauth2.googleapis.com/token", 
-        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.
-        # googleusercontent.com", 
-        #     "client_secret": "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", 
-        #     "scopes": ["https://www.googleapis.com/auth/drive.metadata.readonly"], 
-        #     "expiry": "2023-02-09T11:11:14.527394Z"
-        # }
-
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
         if os.path.exists("token.json"):
@@ -59,20 +76,6 @@ class DriveReader():
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
-                # * If using in colab, write data to a file to read it.
-                # credential_data ={
-                #     "installed": {
-                #         "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3
-                # dvb7beg.apps.googleusercontent.com",
-                #         "project_id":"drivereader-376706",
-                #         "auth_uri":"https://accounts.google.com/o/oauth2/auth",
-                #         "token_uri":"https://oauth2.googleapis.com/token",
-                #         "auth_provider_x509_cert_url":"https://www.googleapis
-                # .com/oauth2/v1/certs",
-                #         "client_secret":"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",
-                #         "redirect_uris":["http://localhost"]
-                #     }
-                # }
                 flow = InstalledAppFlow.from_client_secrets_file(
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
@@ -83,20 +86,13 @@ class DriveReader():
         # Create a connection with drive.
         self.service = build("drive", "v3", credentials=self.creds)
 
-    def search_folder(self):
-        """Search for a specific folder."""
-        try:
-            response = self.service.files().get(fileId=self.research_id).execute()
-            print(response)
-        except HttpError as error:
-            print(f"An error occurred: {error}")
-
-    def sort_files_in_folder(self):
-        """Sort the files in the folder."""
         # Set data empty and then start execution.
         self.data = {}
         self.exempt = []
 
+    def sort_files_in_folder(self, category_name: str):
+        """Sort the files in the folder."""
+        
         try:
             page_token = None
             while True:
@@ -127,6 +123,16 @@ class DriveReader():
                 exempt_obj = json.dumps(self.exempt, indent=4)
                 file.write(exempt_obj)
 
+    def search_folder(self, category_name: str):
+        """Search for a specific folder."""
+        try:
+            response = self.service.files().list(
+                q=f"name contains '{category_name}' and mimeType = 'application/vnd.google-apps.folder'"
+            ).execute()
+            print(response)
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
         # try:
@@ -138,7 +144,7 @@ class DriveReader():
         #     self.classification = {}
 
         try:
-            date, category, extra = name.split("_", 2)
+            date, code, extra = name.split("_", 2)
         except ValueError:
             self.exempt.append(name)
         else:
@@ -153,8 +159,8 @@ class DriveReader():
                 self.exempt.append(name)
             else:
                 year_data = self.data.get(year, {"0": {"0": 0}})
-                category_val = year_data.get(category, 0)
-                year_data.update({category: category_val + 1})
+                code_val = year_data.get(code, 0)
+                year_data.update({code: code_val + 1})
                 if "0" in year_data:
                     year_data.pop("0")
                 self.data.update({year: year_data})
@@ -163,47 +169,21 @@ class DriveReader():
 
     def main(self):
         """The main function of the class."""
-        self.sort_files_in_folder()
+        excelWorker = ExcelWorker()
+        categories = excelWorker.classification
+        for category in categories:
+            print(category.keys)
+            # self.search_folder(category)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
-class ExcelWorker():
-    """The class that will handle interaction with the excel workbooks."""
-
-    def __init__(self) -> None:
-        """Initialize the class"""
-        self.classification = list(dict())
-        self.read_classification_exl()
-
-    def read_classification_exl(self):
-        """Read the classification categories."""
-        # Load the workbook, if not exit the program.
-        try:
-            self.workbook:Workbook = load_workbook("doc_classification.xlsx")
-        except FileNotFoundError: 
-            print("Classification file not found.")
-            sys.exit()
-        worksheet: Worksheet
-        # Loop through all sheets and categorize each code.
-        for worksheet in self.workbook:
-            ws_dict = {}
-            for row in worksheet.iter_rows(min_col=2, max_col=3):
-                code, name = row[0].value, row[1].value
-                if code is not None and name is not None:
-                    ws_dict[code] = name
-            self.classification.append({worksheet.title: ws_dict})
-        with open("classification.json", "w") as file:
-            class_obj = json.dumps(self.classification, indent=4)
-            file.write(class_obj)
-        return self.classification
 
 if __name__ == "__main__":
-    exl = ExcelWorker()
     # Driver Code
-    # DR = DriveReader()
-    # if DR.creds and DR.creds.valid:
-    #     try:
-    #         DR.main()
-    #     except KeyboardInterrupt:
-    #         print("\n\nExiting program by interrupt.")
-    # else:
-    #     sys.exit()
+    try:
+        DR = DriveReader()
+        if DR.creds and DR.creds.valid:
+            DR.main()
+        else:
+            sys.exit()
+    except KeyboardInterrupt:
+        print("\n\nExiting program by interrupt.")
