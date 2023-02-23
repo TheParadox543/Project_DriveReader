@@ -59,9 +59,26 @@ class ExcelWorker():
         for category in drive_data:
             worksheet = workbook.create_sheet(category, -1)
             category_data = drive_data[category]
-            for i, year in enumerate(category_data):
-                worksheet[f"A{i+1}"] = year
-        workbook.save("categorized.xlsx")
+            start, stop = 1, 1
+            for year in category_data:
+                worksheet[f"A{start}"] = year
+                year_data = category_data[year]
+                for code in year_data:
+                    name = self.classification[category][code]
+                    worksheet[f"B{stop}"] = name
+                    worksheet[f"C{stop}"] = year_data[code]
+                    stop += 1
+                start = stop
+        while True:
+            try:
+                workbook.save("categorized.xlsx")
+            except PermissionError:
+                try:
+                    os.system("taskkill/im EXCEL.EXE ")
+                except:
+                    print("Already closed")
+            else:
+                break
 
 
 class DriveReader():
