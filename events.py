@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import os
 import os.path
-import json
+from json import dumps
 import sys
 
 # Install necessary libraries with pip install -r requirements.txt
@@ -38,6 +38,7 @@ class ExcelWorker():
         except FileNotFoundError: 
             print("Classification file not found.")
             sys.exit()
+
         worksheet: Worksheet
         # Loop through all sheets and categorize each code.
         for worksheet in self.workbook:
@@ -48,19 +49,21 @@ class ExcelWorker():
                     ws_dict[code] = name
                     self.code_groups[code] = worksheet.title
             self.classification.update({worksheet.title: ws_dict})
-        with open("classification.json", "w") as file:
-            class_obj = json.dumps(self.classification, indent=4)
-            file.write(class_obj)
-        return self.classification
+        # with open("classification.json", "w") as file:
+        #     class_obj = dumps(self.classification, indent=4)
+        #     file.write(class_obj)
+        # return self.classification
 
     def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], exempted):
         """Write data from the drive to the excel sheet."""
         workbook = Workbook()
         workbook.active.title = "exempted"
+
+        # Loop through all the categories to create new sheets.
         for category in drive_data:
             worksheet: Worksheet = workbook.create_sheet(category, -1)
             category_data = drive_data[category]
-            start, stop, width = 1, 1, 10
+            start, stop, width = 1, 1, 13
             for year in category_data:
                 worksheet[f"A{start}"] = year
                 year_data = category_data[year]
@@ -70,15 +73,18 @@ class ExcelWorker():
                     worksheet[f"C{stop}"] = year_data[code]
                     width = max(width, len(name))
                     stop += 1
+
+                # Merge the cells of same years, and center the alignment.
                 worksheet.merge_cells(f"A{start}:A{stop-1}")
                 worksheet[f"A{start}"].alignment = Alignment(horizontal="center", 
                                                              vertical="center")
                 start = stop
             worksheet.column_dimensions["B"].width = width
-            worksheet.column_dimensions["A"].width = 10
+            worksheet.column_dimensions["A"].width = 13
         worksheet = workbook["exempted"]
         for value in exempted:
             worksheet.append(value)
+        # print(worksheet.column_dimensions["A"].width)
         while True:
             try:
                 # try:
@@ -101,11 +107,12 @@ class DriveReader():
 
     def __init__(self) -> None:
         """Initialize the class."""
+        # Create an object of excel class.
         self.excelWorker = ExcelWorker()
         self.categories = self.excelWorker.classification
         self.code_keys = self.excelWorker.code_groups
+
         self.creds = None
-        self.research_id = "1-kD9F_NrWLANsFNWGih9r2Il9BoAvCsu"
         self.validate_user()
 
     def validate_user(self):
@@ -165,13 +172,13 @@ class DriveReader():
             except HttpError as error:
                 print(f"An error occurred: {error}")
 
-        else:
-            with open("data.json", "w") as file:
-                data_obj = json.dumps(self.data, indent=4)
-                file.write(data_obj)
-            with open("exempt.json", "w") as file:
-                exempt_obj = json.dumps(self.exempt, indent=4)
-                file.write(exempt_obj)
+        # else:
+        #     with open("data.json", "w") as file:
+        #         data_obj = dumps(self.data, indent=4)
+        #         file.write(data_obj)
+        #     with open("exempt.json", "w") as file:
+        #         exempt_obj = dumps(self.exempt, indent=4)
+        #         file.write(exempt_obj)
 
     def search_folder(self, category_name: str):
         """Search for a specific folder."""
