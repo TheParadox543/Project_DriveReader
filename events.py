@@ -26,7 +26,7 @@ class ExcelWorker():
 
     def __init__(self) -> None:
         """Initialize the class"""
-        self.classification: dict[dict[str, str]] = {}
+        self.classification: dict[str, dict[str, str]] = {}
         self.code_groups = {}
         self.read_classification_exl()
 
@@ -53,14 +53,14 @@ class ExcelWorker():
             file.write(class_obj)
         return self.classification
 
-    def write_to_excel(self, drive_data: dict[str, dict[str, int]], exempted):
+    def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], exempted):
         """Write data from the drive to the excel sheet."""
         workbook = Workbook()
         workbook.active.title = "exempted"
         for category in drive_data:
             worksheet: Worksheet = workbook.create_sheet(category, -1)
             category_data = drive_data[category]
-            start, stop = 1, 1
+            start, stop, width = 1, 1, 10
             for year in category_data:
                 worksheet[f"A{start}"] = year
                 year_data = category_data[year]
@@ -68,20 +68,27 @@ class ExcelWorker():
                     name = self.classification[category][code]
                     worksheet[f"B{stop}"] = name
                     worksheet[f"C{stop}"] = year_data[code]
+                    width = max(width, len(name))
                     stop += 1
                 worksheet.merge_cells(f"A{start}:A{stop-1}")
                 start = stop
+            worksheet.column_dimensions["B"].width = width
+            worksheet.column_dimensions["A"].width = 10
         worksheet = workbook["exempted"]
         for value in exempted:
             worksheet.append(value)
         while True:
             try:
+                # try:
+                #     os.system("taskkill/im EXCEL.EXE categorized.xlsx")
+                # except:
+                #     pass
                 workbook.save("categorized.xlsx")
             except PermissionError:
                 try:
                     os.system("taskkill/im EXCEL.EXE categorized.xlsx")
                 except:
-                    print("Already closed")
+                    pass
             else:
                 break
         os.system("start EXCEL.EXE categorized.xlsx")
