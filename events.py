@@ -13,6 +13,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
+from openpyxl.worksheet.dimensions import ColumnDimension
 from openpyxl.worksheet.worksheet import Worksheet
 
 # If modifying these scopes, delete the file token.json.
@@ -52,12 +53,12 @@ class ExcelWorker():
             file.write(class_obj)
         return self.classification
 
-    def write_to_excel(self, drive_data: dict[str, dict[str, int]]):
+    def write_to_excel(self, drive_data: dict[str, dict[str, int]], exempted):
         """Write data from the drive to the excel sheet."""
         workbook = Workbook()
         workbook.active.title = "exempted"
         for category in drive_data:
-            worksheet = workbook.create_sheet(category, -1)
+            worksheet: Worksheet = workbook.create_sheet(category, -1)
             category_data = drive_data[category]
             start, stop = 1, 1
             for year in category_data:
@@ -68,17 +69,22 @@ class ExcelWorker():
                     worksheet[f"B{stop}"] = name
                     worksheet[f"C{stop}"] = year_data[code]
                     stop += 1
+                worksheet.merge_cells(f"A{start}:A{stop-1}")
                 start = stop
+        worksheet = workbook["exempted"]
+        for value in exempted:
+            worksheet.append(value)
         while True:
             try:
                 workbook.save("categorized.xlsx")
             except PermissionError:
                 try:
-                    os.system("taskkill/im EXCEL.EXE ")
+                    os.system("taskkill/im EXCEL.EXE categorized.xlsx")
                 except:
                     print("Already closed")
             else:
                 break
+        os.system("start EXCEL.EXE categorized.xlsx")
 
 
 class DriveReader():
@@ -210,7 +216,7 @@ class DriveReader():
         """The main function of the class."""
         for category in self.categories:
             self.sort_files_in_folder(category)
-        self.excelWorker.write_to_excel(self.data)
+        self.excelWorker.write_to_excel(self.data, self.exempt)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
 
