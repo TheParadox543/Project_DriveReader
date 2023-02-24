@@ -13,8 +13,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
-from openpyxl.worksheet.dimensions import ColumnDimension
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.styles import Alignment
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -71,6 +71,8 @@ class ExcelWorker():
                     width = max(width, len(name))
                     stop += 1
                 worksheet.merge_cells(f"A{start}:A{stop-1}")
+                worksheet[f"A{start}"].alignment = Alignment(horizontal="center", 
+                                                             vertical="center")
                 start = stop
             worksheet.column_dimensions["B"].width = width
             worksheet.column_dimensions["A"].width = 10
