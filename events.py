@@ -14,7 +14,7 @@ from googleapiclient.errors import HttpError
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.styles import Alignment
+from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
 # If modifying these scopes, delete the file token.json.
@@ -68,7 +68,8 @@ class ExcelWorker():
             worksheet.append(["YEAR", "CLASSIFICATION", "COUNT"])
             for i in range(1, 4):
                 worksheet[f"{get_column_letter(i)}1"].alignment = Alignment(horizontal="center")
-            start, stop, width = 2, 2, 15
+                worksheet[f"{get_column_letter(i)}1"].font = Font(bold=True, size=12)
+            start, stop, width = 2, 2, 16
             for year in category_data:
                 worksheet[f"A{start}"] = year
                 year_data = category_data[year]
