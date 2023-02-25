@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Alignment
+from openpyxl.utils import get_column_letter
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -54,7 +55,8 @@ class ExcelWorker():
         #     file.write(class_obj)
         # return self.classification
 
-    def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], exempted):
+    def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], 
+                       exempted: list[tuple[str, str]]):
         """Write data from the drive to the excel sheet."""
         workbook = Workbook()
         workbook.active.title = "exempted"
@@ -63,7 +65,10 @@ class ExcelWorker():
         for category in drive_data:
             worksheet: Worksheet = workbook.create_sheet(category, -1)
             category_data = drive_data[category]
-            start, stop, width = 1, 1, 13
+            worksheet.append(["YEAR", "CLASSIFICATION", "COUNT"])
+            for i in range(1, 4):
+                worksheet[f"{get_column_letter(i)}1"].alignment = Alignment(horizontal="center")
+            start, stop, width = 2, 2, 15
             for year in category_data:
                 worksheet[f"A{start}"] = year
                 year_data = category_data[year]
@@ -82,9 +87,13 @@ class ExcelWorker():
             worksheet.column_dimensions["B"].width = width
             worksheet.column_dimensions["A"].width = 13
         worksheet = workbook["exempted"]
+        worksheet.append(["File Name", "Folder name"])
+        width1, width2 = 13, 13
         for value in exempted:
             worksheet.append(value)
-        # print(worksheet.column_dimensions["A"].width)
+            width1, width2 = max(width1, len(value[0])), max(width2, len(value[1]))
+        worksheet.column_dimensions["A"].width = width1
+        worksheet.column_dimensions["B"].width = width2
         while True:
             try:
                 # try:
@@ -230,8 +239,16 @@ class DriveReader():
 
     def main(self):
         """The main function of the class."""
-        for category in self.categories:
-            self.sort_files_in_folder(category)
+        folders = [
+            "Alumni",
+            "Curriculum",
+            "Events",
+            "Faculty",
+            "Mou_Consultancy",
+            "Research"
+        ]
+        for folder in folders:
+            self.sort_files_in_folder(folder)
         self.excelWorker.write_to_excel(self.data, self.exempt)
         # self.classify_file("20220730_cprs_rv_1.pdf")
 
