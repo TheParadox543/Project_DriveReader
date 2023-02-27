@@ -6,27 +6,27 @@
     },
     "RESEARCH": {
         "2021-2022": {
-            "MOUS": 6,
-            "CPRS": 1,
             "BCHP": 1,
+            "CPRS": 2,
             "JPUI": 1,
+            "MOUS": 6,
             "SORG": 1
         },
         "2020-2021": {
             "MOUS": 1
         },
         "2022-2023": {
-            "MOUS": 1,
-            "CSCH": 1,
-            "CKEY": 1,
-            "CATT": 2,
-            "CPUB": 2,
             "BCHP": 1,
-            "PFIL": 3,
-            "JPUI": 3,
-            "SORG": 1,
+            "CATT": 2,
+            "CKEY": 1,
+            "CPRS": 4,
+            "CPUB": 2,
+            "CSCH": 1,
+            "JPUI": 5,
             "JPUN": 3,
-            "CPRS": 2
+            "MOUS": 1,
+            "PFIL": 3,
+            "SORG": 1
         }
     },
     "TLEC": {

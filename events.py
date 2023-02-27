@@ -11,6 +11,7 @@ Project Contributors: Ashok Immanuel, Rohini V.
 
 from __future__ import print_function
 
+from collections import OrderedDict
 import io
 import os
 import os.path
@@ -45,7 +46,7 @@ class ExcelWorker():
     def __init__(self) -> None:
         """Initialize the class"""
         self.classification: dict[str, dict[str, str]] = {}
-        self.code_groups = {}
+        self.code_groups:dict[str, str] = {}
         self.read_classification_exl()
 
     def read_classification_exl(self):
@@ -61,11 +62,17 @@ class ExcelWorker():
         # Loop through all sheets and categorize each code.
         for worksheet in self.workbook:
             if worksheet.title == "NAAC Quantitative":
-                # spec = None
-                for row in worksheet.iter_rows(min_col=2, max_col=4, min_row=4, values_only=True):
+                self.final_codes = {}
+                for row in worksheet.iter_rows(min_col=2, max_col=4, 
+                                               min_row=4, values_only=True):
                     spec:str = row[0] or spec
                     letter_code, full_form = row[1], row[2]
-                    print(spec, letter_code, full_form) 
+                    # print(spec, letter_code, full_form) 
+                    if letter_code in self.final_codes:
+                        self.final_codes[letter_code].append(spec)
+                    else:
+                        self.final_codes[letter_code] = [spec]
+                    # pp.pprint(self.final_codes)
 
             else:
                 ws_dict = {}
@@ -73,7 +80,7 @@ class ExcelWorker():
                     code, name = row[0].value, row[1].value
                     if code is not None and name is not None:
                         ws_dict[code] = name
-                        self.code_groups[code] = worksheet.title
+                        self.code_groups[code] = str(worksheet.title)
                 if ws_dict != {}:
                     self.classification.update({worksheet.title: ws_dict})
         with open("classification.json", "w") as file:
@@ -135,7 +142,10 @@ class ExcelWorker():
                     pass
             else:
                 break
-        os.system("start EXCEL.EXE categorized.xlsx")
+        # os.system("start EXCEL.EXE categorized.xlsx")
+
+    def write_to_naac(self):
+        """Write data to excel sheet in naac required format."""
 
 
 class DriveReader():
@@ -145,7 +155,7 @@ class DriveReader():
         """Initialize the class."""
         self.creds = None
         self.validate_user()
-        self.download_sheet()
+        # self.download_sheet()
 
         # Create an object of excel class.
         self.excelWorker = ExcelWorker()
@@ -175,8 +185,8 @@ class DriveReader():
         self.service = build("drive", "v3", credentials=self.creds)
 
         # Set data empty and then start execution.
-        self.data = {}
-        self.exempt = []
+        self.data:dict[str, dict[str, dict[str, int]]] = {}
+        self.exempt:list[tuple(str, str)] = []
 
     def sort_files_in_folder(self, category_name: str):
         """Sort the files in the folder."""
@@ -209,13 +219,6 @@ class DriveReader():
             except HttpError as error:
                 print(f"An error occurred: {error}")
 
-        else:
-            with open("data.json", "w") as file:
-                data_obj = dumps(self.data, indent=4)
-                file.write(data_obj)
-            with open("exempt.json", "w") as file:
-                exempt_obj = dumps(self.exempt, indent=4)
-                file.write(exempt_obj)
 
     def search_folder(self, category_name: str):
         """Search for a specific folder."""
@@ -304,18 +307,31 @@ class DriveReader():
 
     def main(self):
         """The main function of the class."""
-        # folders = [
-        #     "Alumni",
-        #     "Curriculum",
-        #     "Events",
-        #     "Faculty",
-        #     "Mou_Consultancy",
-        #     "Research"
-        # ]
-        # for folder in folders:
-        #     self.sort_files_in_folder(folder)
-        # self.excelWorker.write_to_excel(self.data, self.exempt)
-        # # self.classify_file("20220730_cprs_rv_1.pdf")
+        folders = [
+            "Alumni",
+            "Curriculum",
+            "Events",
+            "Faculty",
+            "Mou_Consultancy",
+            "Research"
+        ]
+        for folder in folders:
+            self.sort_files_in_folder(folder)
+        else:
+            for category in self.data:
+                for year in self.data[category]:
+                    year_data = self.data[category][year]
+                    order_list = sorted(year_data.keys())
+                    new_list = dict([(i, year_data[i]) for i in order_list])
+                    self.data[category][year] = new_list
+            with open("data.json", "w") as file:
+                data_obj = dumps(self.data, indent=4)
+                file.write(data_obj)
+            with open("exempt.json", "w") as file:
+                exempt_obj = dumps(self.exempt, indent=4)
+                file.write(exempt_obj)
+        self.excelWorker.write_to_excel(self.data, self.exempt)
+        # self.classify_file("20220730_cprs_rv_1.pdf")
         # pp.pprint(self.search_file("doc_classification"))
 
 
