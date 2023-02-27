@@ -11,7 +11,6 @@ Project Contributors: Ashok Immanuel, Rohini V.
 
 from __future__ import print_function
 
-from collections import OrderedDict
 import io
 import os
 import os.path
@@ -63,17 +62,24 @@ class ExcelWorker():
         for worksheet in self.workbook:
             if worksheet.title == "NAAC Quantitative":
                 self.final_codes: dict[str, list[str]] = {}
-                for row in worksheet.iter_rows(min_col=2, max_col=4, 
+                self.categories: dict[int, str] = {}
+
+                for row in worksheet.iter_rows(min_col=1, max_col=4, 
                                                min_row=4, values_only=True):
-                    spec:str = row[0] or spec
-                    letter_code, full_form = row[1], row[2]
+                    category:str = row[0]
+                    spec:str = row[1] or spec
+                    letter_code, full_form = row[2], row[3]
+
+                    if category:
+                        self.categories[int(spec[0])] = category
                     # print(spec, letter_code, full_form) 
                     if letter_code is not None:
                         if letter_code in self.final_codes:
                             self.final_codes[letter_code].append(spec)
                         else:
                             self.final_codes[letter_code] = [spec]
-                pp.pprint(self.final_codes)
+                # pp.pprint(self.final_codes)
+                # print(self.categories)
 
             else:
                 ws_dict = {}
@@ -156,7 +162,33 @@ class ExcelWorker():
                         if self.final_codes.get(code):
                             for spec in self.final_codes.get(code):
                                 spec_data.update({spec: spec_data.get(spec, 0) + year_data[code]})
-        pp.pprint(spec_data)
+        order_list = sorted(spec_data.keys())
+        new_list = dict([(i, spec_data[i]) for i in order_list])
+        spec_data = new_list
+        naac_wb = Workbook()
+        naac_ws: Worksheet = naac_wb.active
+        start, stop = 1, 1
+        old_number = 0
+        width = 13
+        for spec in spec_data:
+            number = int(spec[0])
+            if old_number != number:
+                naac_ws.merge_cells(f"A{start}:A{stop}")
+                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+                                                           vertical="center")
+                start = stop + 1
+                old_number = number
+                # stop += 1
+                naac_ws[f"A{start}"] = self.categories[number]
+                width = max(width, len(self.categories[number])*1.3)
+            stop += 1
+            naac_ws[f"B{stop}"] = spec
+            naac_ws[f"C{stop}"] = spec_data[spec]
+        naac_ws.column_dimensions["A"].width = width
+        try:
+            naac_wb.save("naac.xlsx")
+        except PermissionError:
+            print("Failed to save naac.xlsx")
 
 
 class DriveReader():
