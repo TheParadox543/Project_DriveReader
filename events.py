@@ -62,17 +62,18 @@ class ExcelWorker():
         # Loop through all sheets and categorize each code.
         for worksheet in self.workbook:
             if worksheet.title == "NAAC Quantitative":
-                self.final_codes = {}
+                self.final_codes: dict[str, list[str]] = {}
                 for row in worksheet.iter_rows(min_col=2, max_col=4, 
                                                min_row=4, values_only=True):
                     spec:str = row[0] or spec
                     letter_code, full_form = row[1], row[2]
                     # print(spec, letter_code, full_form) 
-                    if letter_code in self.final_codes:
-                        self.final_codes[letter_code].append(spec)
-                    else:
-                        self.final_codes[letter_code] = [spec]
-                    # pp.pprint(self.final_codes)
+                    if letter_code is not None:
+                        if letter_code in self.final_codes:
+                            self.final_codes[letter_code].append(spec)
+                        else:
+                            self.final_codes[letter_code] = [spec]
+                pp.pprint(self.final_codes)
 
             else:
                 ws_dict = {}
@@ -144,8 +145,18 @@ class ExcelWorker():
                 break
         # os.system("start EXCEL.EXE categorized.xlsx")
 
-    def write_to_naac(self):
+    def write_to_naac(self, drive_data: dict[str, dict[str, dict[str, int]]]):
         """Write data to excel sheet in naac required format."""
+        spec_data = {}
+        for category_data in drive_data.values():
+            for year in category_data:
+                if year == "2022-2023":
+                    year_data = category_data[year]
+                    for code in year_data:
+                        if self.final_codes.get(code):
+                            for spec in self.final_codes.get(code):
+                                spec_data.update({spec: spec_data.get(spec, 0) + year_data[code]})
+        pp.pprint(spec_data)
 
 
 class DriveReader():
@@ -330,7 +341,8 @@ class DriveReader():
             with open("exempt.json", "w") as file:
                 exempt_obj = dumps(self.exempt, indent=4)
                 file.write(exempt_obj)
-        self.excelWorker.write_to_excel(self.data, self.exempt)
+        # self.excelWorker.write_to_excel(self.data, self.exempt)
+        self.excelWorker.write_to_naac(self.data)
         # self.classify_file("20220730_cprs_rv_1.pdf")
         # pp.pprint(self.search_file("doc_classification"))
 
