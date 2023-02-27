@@ -182,13 +182,13 @@ class DriveReader():
             except HttpError as error:
                 print(f"An error occurred: {error}")
 
-        # else:
-        #     with open("data.json", "w") as file:
-        #         data_obj = dumps(self.data, indent=4)
-        #         file.write(data_obj)
-        #     with open("exempt.json", "w") as file:
-        #         exempt_obj = dumps(self.exempt, indent=4)
-        #         file.write(exempt_obj)
+        else:
+            with open("data.json", "w") as file:
+                data_obj = dumps(self.data, indent=4)
+                file.write(data_obj)
+            with open("exempt.json", "w") as file:
+                exempt_obj = dumps(self.exempt, indent=4)
+                file.write(exempt_obj)
 
     def search_folder(self, category_name: str):
         """Search for a specific folder."""
