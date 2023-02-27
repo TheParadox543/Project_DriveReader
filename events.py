@@ -1,8 +1,10 @@
 from __future__ import print_function
 
+import io
 import os
 import os.path
 from json import dumps
+from pprint import PrettyPrinter
 import sys
 
 # Install necessary libraries with pip install -r requirements.txt
@@ -11,6 +13,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseDownload
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -19,8 +22,11 @@ from openpyxl.utils import get_column_letter
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
-    "https://www.googleapis.com/auth/drive.metadata"
+    "https://www.googleapis.com/auth/drive"
 ]
+
+pp = PrettyPrinter(indent=4)
+
 
 class ExcelWorker():
     """The class that will handle interaction with the excel workbooks."""
@@ -198,6 +204,19 @@ class DriveReader():
                     'application/vnd.google-apps.folder'"
             ).execute()
             return response.get("files", None)
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return None
+
+    def search_file(self, file_name: str):
+        """Search for a specific folder."""
+        try:
+            response = self.service.files().list(
+                q=f"name contains '{file_name}'"
+            ).execute()
+            return response.get("files", None)
+
         except HttpError as error:
             print(f"An error occurred: {error}")
             return None
@@ -238,20 +257,46 @@ class DriveReader():
                 if "0" in self.data:
                     self.data.pop("0")
 
+    def download_sheet(self):
+        """Download the required excel sheet."""
+        self.excel_sheet_id = "1b5yJfOIWCHXdr7VbFxoNLs_SI5zPR7CL0MsCI1zqWaM"
+        try:
+            # response = self.service.files().export(fileId=self.excel_sheet_id,
+            #                                        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").execute()
+            # print(response)
+            # print(dir(response))
+            request = self.service.files().export_media(fileId=self.excel_sheet_id,
+                                               mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            file = io.BytesIO()
+            downloader = MediaIoBaseDownload(file, request)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+
+            with open("new_file.xlsx", "wb") as write_file:
+                write_file.write(file.getbuffer())
+
+            print(F'Download {int(status.progress() * 100)}.')
+
+        except HttpError as error:
+            print(f"{error} has occurred.")
+
     def main(self):
         """The main function of the class."""
-        folders = [
-            "Alumni",
-            "Curriculum",
-            "Events",
-            "Faculty",
-            "Mou_Consultancy",
-            "Research"
-        ]
-        for folder in folders:
-            self.sort_files_in_folder(folder)
-        self.excelWorker.write_to_excel(self.data, self.exempt)
-        # self.classify_file("20220730_cprs_rv_1.pdf")
+        # folders = [
+        #     "Alumni",
+        #     "Curriculum",
+        #     "Events",
+        #     "Faculty",
+        #     "Mou_Consultancy",
+        #     "Research"
+        # ]
+        # for folder in folders:
+        #     self.sort_files_in_folder(folder)
+        # self.excelWorker.write_to_excel(self.data, self.exempt)
+        # # self.classify_file("20220730_cprs_rv_1.pdf")
+        # pp.pprint(self.search_file("doc_classification"))
+        self.download_sheet()
 
 
 if __name__ == "__main__":
