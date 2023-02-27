@@ -49,17 +49,26 @@ class ExcelWorker():
         worksheet: Worksheet
         # Loop through all sheets and categorize each code.
         for worksheet in self.workbook:
-            ws_dict = {}
-            for row in worksheet.iter_rows(min_col=2, max_col=3):
-                code, name = row[0].value, row[1].value
-                if code is not None and name is not None:
-                    ws_dict[code] = name
-                    self.code_groups[code] = worksheet.title
-            self.classification.update({worksheet.title: ws_dict})
-        # with open("classification.json", "w") as file:
-        #     class_obj = dumps(self.classification, indent=4)
-        #     file.write(class_obj)
-        # return self.classification
+            if worksheet.title == "NAAC Quantitative":
+                # spec = None
+                for row in worksheet.iter_rows(min_col=2, max_col=4, min_row=4, values_only=True):
+                    spec:str = row[0] or spec
+                    letter_code, full_form = row[1], row[2]
+                    print(spec, letter_code, full_form) 
+
+            else:
+                ws_dict = {}
+                for row in worksheet.iter_rows(min_col=2, max_col=3):
+                    code, name = row[0].value, row[1].value
+                    if code is not None and name is not None:
+                        ws_dict[code] = name
+                        self.code_groups[code] = worksheet.title
+                if ws_dict != {}:
+                    self.classification.update({worksheet.title: ws_dict})
+        with open("classification.json", "w") as file:
+            class_obj = dumps(self.classification, indent=4)
+            file.write(class_obj)
+        return self.classification
 
     def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], 
                        exempted: list[tuple[str, str]]):
@@ -123,13 +132,14 @@ class DriveReader():
 
     def __init__(self) -> None:
         """Initialize the class."""
+        self.creds = None
+        self.validate_user()
+        self.download_sheet()
+
         # Create an object of excel class.
         self.excelWorker = ExcelWorker()
         self.categories = self.excelWorker.classification
         self.code_keys = self.excelWorker.code_groups
-
-        self.creds = None
-        self.validate_user()
 
     def validate_user(self):
         """Validate the program if the user who runs it is registered."""
@@ -273,7 +283,7 @@ class DriveReader():
             while done is False:
                 status, done = downloader.next_chunk()
 
-            with open("new_file.xlsx", "wb") as write_file:
+            with open("doc_classification.xlsx", "wb") as write_file:
                 write_file.write(file.getbuffer())
 
             print(F'Download {int(status.progress() * 100)}.')
@@ -296,7 +306,6 @@ class DriveReader():
         # self.excelWorker.write_to_excel(self.data, self.exempt)
         # # self.classify_file("20220730_cprs_rv_1.pdf")
         # pp.pprint(self.search_file("doc_classification"))
-        self.download_sheet()
 
 
 if __name__ == "__main__":
