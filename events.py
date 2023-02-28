@@ -71,7 +71,7 @@ class ExcelWorker():
                     spec:str = row[1] or spec
                     letter_code, full_form = row[2], row[3]
 
-                    if category:
+                    if category and int(spec[0]) not in self.categories:
                         self.categories[int(spec[0])] = category
                     # print(spec, letter_code, full_form) 
                     if letter_code is not None:
@@ -79,7 +79,7 @@ class ExcelWorker():
                             self.final_codes[letter_code].append(spec)
                         else:
                             self.final_codes[letter_code] = [spec]
-                    if spec:
+                    if spec and spec not in self.spec_list:
                         self.spec_list[spec] = category
                 # print(self.final_codes)
                 # print(self.spec_list)
@@ -203,12 +203,23 @@ class ExcelWorker():
                 naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
                                                            vertical="center")
                 start, word = num, self.spec_list[spec]
-        naac_ws.column_dimensions["A"].width = width
+        else:
+            naac_ws.merge_cells(f"A{start}:A{num}")
+            naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+                                                        vertical="center")
+            for i in range(1, 4):
+                naac_ws[f"{get_column_letter(i)}1"].alignment = Alignment(
+                    horizontal="center", vertical="center")
+                naac_ws[f"{get_column_letter(i)}1"].font = Font(bold=True, size=12)
+            naac_ws.column_dimensions["A"].width = width
 
-        try:
-            naac_wb.save("naac.xlsx")
-        except PermissionError:
-            print("Failed to save naac.xlsx")
+        while True:
+            try:
+                naac_wb.save("naac.xlsx")
+                break
+            except PermissionError:
+                print("Failed to save naac.xlsx")
+                os.system("taskkill /im EXCEL.EXE naac.xlsx")
         os.system("start EXCEL.EXE naac.xlsx")
 
 
