@@ -63,10 +63,11 @@ class ExcelWorker():
             if worksheet.title == "NAAC Quantitative":
                 self.final_codes: dict[str, list[str]] = {}
                 self.categories: dict[int, str] = {}
+                self.spec_list: dict[str, str] = {}
 
                 for row in worksheet.iter_rows(min_col=1, max_col=4, 
                                                min_row=4, values_only=True):
-                    category:str = row[0]
+                    category:str = row[0] or category
                     spec:str = row[1] or spec
                     letter_code, full_form = row[2], row[3]
 
@@ -78,7 +79,10 @@ class ExcelWorker():
                             self.final_codes[letter_code].append(spec)
                         else:
                             self.final_codes[letter_code] = [spec]
-                # pp.pprint(self.final_codes)
+                    if spec:
+                        self.spec_list[spec] = category
+                # print(self.final_codes)
+                # print(self.spec_list)
                 # print(self.categories)
 
             else:
@@ -90,9 +94,9 @@ class ExcelWorker():
                         self.code_groups[code] = str(worksheet.title)
                 if ws_dict != {}:
                     self.classification.update({worksheet.title: ws_dict})
-        with open("classification.json", "w") as file:
-            class_obj = dumps(self.classification, indent=4)
-            file.write(class_obj)
+        # with open("classification.json", "w") as file:
+        #     class_obj = dumps(self.classification, indent=4)
+        #     file.write(class_obj)
         return self.classification
 
     def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], 
@@ -163,32 +167,39 @@ class ExcelWorker():
                             for spec in self.final_codes.get(code):
                                 spec_data.update({spec: spec_data.get(spec, 0) + year_data[code]})
         order_list = sorted(spec_data.keys())
-        new_list = dict([(i, spec_data[i]) for i in order_list])
-        spec_data = new_list
+        spec_data = dict([(i, spec_data[i]) for i in order_list])
         naac_wb = Workbook()
         naac_ws: Worksheet = naac_wb.active
         start, stop = 1, 1
         old_number = 0
         width = 13
-        for spec in spec_data:
-            number = int(spec[0])
-            if old_number != number:
-                naac_ws.merge_cells(f"A{start}:A{stop}")
-                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
-                                                           vertical="center")
-                start = stop + 1
-                old_number = number
-                # stop += 1
-                naac_ws[f"A{start}"] = self.categories[number]
-                width = max(width, len(self.categories[number])*1.3)
-            stop += 1
-            naac_ws[f"B{stop}"] = spec
-            naac_ws[f"C{stop}"] = spec_data[spec]
-        naac_ws.column_dimensions["A"].width = width
+        # print(spec_data)
+    
+        # for spec in spec_data:
+        #     number = int(spec[0])
+        #     if old_number != number:
+        #         naac_ws.merge_cells(f"A{start}:A{stop}")
+        #         start = stop + 1
+        #         naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+        #                                                    vertical="center")
+        #         old_number = number
+        #         # stop += 1
+        #         naac_ws[f"A{start}"] = self.categories[number]
+        #         width = max(width, len(self.categories[number])*1.3)
+        #     stop += 1
+        #     naac_ws[f"B{stop}"] = spec
+        #     naac_ws[f"C{stop}"] = spec_data[spec]
+        # naac_ws.column_dimensions["A"].width = width
+    
+        naac_ws.append(["Classification", "Code", "Count"])
+        for spec in self.spec_list:
+            naac_ws.append([self.spec_list[spec], spec, spec_data.get(spec, 0)])
+
         try:
             naac_wb.save("naac.xlsx")
         except PermissionError:
             print("Failed to save naac.xlsx")
+        os.system("start EXCEL.EXE naac.xlsx")
 
 
 class DriveReader():
@@ -367,12 +378,12 @@ class DriveReader():
                     order_list = sorted(year_data.keys())
                     new_list = dict([(i, year_data[i]) for i in order_list])
                     self.data[category][year] = new_list
-            with open("data.json", "w") as file:
-                data_obj = dumps(self.data, indent=4)
-                file.write(data_obj)
-            with open("exempt.json", "w") as file:
-                exempt_obj = dumps(self.exempt, indent=4)
-                file.write(exempt_obj)
+            # with open("data.json", "w") as file:
+            #     data_obj = dumps(self.data, indent=4)
+            #     file.write(data_obj)
+            # with open("exempt.json", "w") as file:
+            #     exempt_obj = dumps(self.exempt, indent=4)
+            #     file.write(exempt_obj)
         # self.excelWorker.write_to_excel(self.data, self.exempt)
         self.excelWorker.write_to_naac(self.data)
         # self.classify_file("20220730_cprs_rv_1.pdf")
