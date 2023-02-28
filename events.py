@@ -175,6 +175,7 @@ class ExcelWorker():
         width = 13
         # print(spec_data)
     
+        # * Entering the data that is there.
         # for spec in spec_data:
         #     number = int(spec[0])
         #     if old_number != number:
@@ -191,9 +192,18 @@ class ExcelWorker():
         #     naac_ws[f"C{stop}"] = spec_data[spec]
         # naac_ws.column_dimensions["A"].width = width
     
+        # * Entering all specification codes.
         naac_ws.append(["Classification", "Code", "Count"])
-        for spec in self.spec_list:
+        start, word = 1, None
+        for num, spec in enumerate(self.spec_list, 2):
             naac_ws.append([self.spec_list[spec], spec, spec_data.get(spec, 0)])
+            width = max(width, len(self.spec_list[spec])*1.2)
+            if word != self.spec_list[spec]:
+                naac_ws.merge_cells(f"A{start}:A{num-1}")
+                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+                                                           vertical="center")
+                start, word = num, self.spec_list[spec]
+        naac_ws.column_dimensions["A"].width = width
 
         try:
             naac_wb.save("naac.xlsx")
