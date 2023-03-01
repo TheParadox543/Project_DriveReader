@@ -3,3 +3,4 @@ __pycache__
 dist
 token.json
 credentials.json
+folders.json
