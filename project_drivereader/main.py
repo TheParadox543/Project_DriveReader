@@ -228,16 +228,19 @@ class DriveReader():
     def __init__(self) -> None:
         """Initialize the class."""
         self.creds = None
-        self.validate_user()
-        # self.download_sheet()
+        self.initialize_connection()
+
+        # Set data empty and then start execution.
+        self.data:dict[str, dict[str, dict[str, int]]] = {}
+        self.exempt:list[tuple(str, str)] = []
 
         # Create an object of excel class.
         self.excelWorker = ExcelWorker()
         self.categories = self.excelWorker.classification
         self.code_keys = self.excelWorker.code_groups
 
-    def validate_user(self):
-        """Validate the program if the user who runs it is registered."""
+    def initialize_connection(self):
+        """Make the initial connection with drive."""
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
         if path.exists("token.json"):
@@ -258,9 +261,35 @@ class DriveReader():
         # Create a connection with drive.
         self.service = build("drive", "v3", credentials=self.creds)
 
-        # Set data empty and then start execution.
-        self.data:dict[str, dict[str, dict[str, int]]] = {}
-        self.exempt:list[tuple(str, str)] = []
+        if self.creds and self.creds.valid:
+            return "Connection made."
+        else:
+            return "Connection failed."
+
+    def search_file(self, file_name: str):
+        """Search for a specific folder."""
+        try:
+            response = self.service.files().list(
+                q=f"name contains '{file_name}'"
+            ).execute()
+            return response.get("files", None)
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return None
+
+    def search_folder(self, category_name: str):
+        """Search for a specific folder."""
+        try:
+            response = self.service.files().list(
+                q=f"name contains '{category_name}' and mimeType = \
+                    'application/vnd.google-apps.folder'"
+            ).execute()
+            return response.get("files", None)
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return None
 
     def sort_files_in_folder(self, category_name: str):
         """Sort the files in the folder."""
@@ -292,32 +321,6 @@ class DriveReader():
 
             except HttpError as error:
                 print(f"An error occurred: {error}")
-
-
-    def search_folder(self, category_name: str):
-        """Search for a specific folder."""
-        try:
-            response = self.service.files().list(
-                q=f"name contains '{category_name}' and mimeType = \
-                    'application/vnd.google-apps.folder'"
-            ).execute()
-            return response.get("files", None)
-
-        except HttpError as error:
-            print(f"An error occurred: {error}")
-            return None
-
-    def search_file(self, file_name: str):
-        """Search for a specific folder."""
-        try:
-            response = self.service.files().list(
-                q=f"name contains '{file_name}'"
-            ).execute()
-            return response.get("files", None)
-
-        except HttpError as error:
-            print(f"An error occurred: {error}")
-            return None
 
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
@@ -359,12 +362,10 @@ class DriveReader():
         """Download the required excel sheet."""
         self.excel_sheet_id = "1b5yJfOIWCHXdr7VbFxoNLs_SI5zPR7CL0MsCI1zqWaM"
         try:
-            # response = self.service.files().export(fileId=self.excel_sheet_id,
-            #                                        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").execute()
-            # print(response)
-            # print(dir(response))
+            mime_type = "application/vnd.openxmlformats-officedocument"
+            mime_type += ".spreadsheetml.sheet"
             request = self.service.files().export_media(fileId=self.excel_sheet_id,
-                                               mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                                                        mimeType=mime_type)
             file = BytesIO()
             downloader = MediaIoBaseDownload(file, request)
             done = False
@@ -417,6 +418,8 @@ if __name__ == "__main__":
         if DR.creds and DR.creds.valid:
             DR.main()
         else:
+            print("Could not run the program due to invalid credentials.")
+            print("Fix credentials and try again.")
             sysexit()
     except KeyboardInterrupt:
         print("\n\nExiting program by interrupt.")
