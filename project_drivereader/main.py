@@ -9,16 +9,15 @@ Project Contributors: Ashok Immanuel, Rohini V.
 """
 
 
+# Install necessary libraries with pip install -r requirements.txt
 from __future__ import print_function
 
-import io
-import os
-import os.path
+from io import BytesIO
 from json import dumps
+from os import path, system as ossystem
 from pprint import PrettyPrinter
-import sys
+from sys import exit as sysexit
 
-# Install necessary libraries with pip install -r requirements.txt
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -26,10 +25,10 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 from openpyxl import load_workbook
-from openpyxl.workbook.workbook import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
+from openpyxl.workbook.workbook import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -55,7 +54,7 @@ class ExcelWorker():
             self.workbook:Workbook = load_workbook("doc_classification.xlsx")
         except FileNotFoundError: 
             print("Classification file not found.")
-            sys.exit()
+            sysexit()
 
         worksheet: Worksheet
         # Loop through all sheets and categorize each code.
@@ -148,7 +147,7 @@ class ExcelWorker():
                 workbook.save("categorized.xlsx")
             except PermissionError:
                 try:
-                    os.system("taskkill/im EXCEL.EXE categorized.xlsx")
+                    ossystem("taskkill/im EXCEL.EXE categorized.xlsx")
                 except:
                     pass
             else:
@@ -219,8 +218,8 @@ class ExcelWorker():
                 break
             except PermissionError:
                 print("Failed to save naac.xlsx")
-                os.system("taskkill /im EXCEL.EXE naac.xlsx")
-        os.system("start EXCEL.EXE naac.xlsx")
+                ossystem("taskkill /im EXCEL.EXE naac.xlsx")
+        ossystem("start EXCEL.EXE naac.xlsx")
 
 
 class DriveReader():
@@ -241,7 +240,7 @@ class DriveReader():
         """Validate the program if the user who runs it is registered."""
         # The file stores user's access and refresh tokens, and is created 
         # automatically when first authorization flow is completed.
-        if os.path.exists("token.json"):
+        if path.exists("token.json"):
             self.creds = Credentials.from_authorized_user_file("token.json", 
                                                                SCOPES)
 
@@ -366,7 +365,7 @@ class DriveReader():
             # print(dir(response))
             request = self.service.files().export_media(fileId=self.excel_sheet_id,
                                                mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            file = io.BytesIO()
+            file = BytesIO()
             downloader = MediaIoBaseDownload(file, request)
             done = False
             while done is False:
@@ -418,6 +417,6 @@ if __name__ == "__main__":
         if DR.creds and DR.creds.valid:
             DR.main()
         else:
-            sys.exit()
+            sysexit()
     except KeyboardInterrupt:
         print("\n\nExiting program by interrupt.")
