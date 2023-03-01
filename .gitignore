@@ -1,4 +1,5 @@
 drivevenv
 __pycache__
+dist
 token.json
 credentials.json
