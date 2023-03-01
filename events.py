@@ -94,9 +94,9 @@ class ExcelWorker():
                         self.code_groups[code] = str(worksheet.title)
                 if ws_dict != {}:
                     self.classification.update({worksheet.title: ws_dict})
-        # with open("classification.json", "w") as file:
-        #     class_obj = dumps(self.classification, indent=4)
-        #     file.write(class_obj)
+        with open("classification.json", "w") as file:
+            class_obj = dumps(self.classification, indent=4)
+            file.write(class_obj)
         return self.classification
 
     def write_to_excel(self, drive_data: dict[str, dict[str, dict[str, int]]], 
