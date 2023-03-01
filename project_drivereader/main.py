@@ -330,7 +330,7 @@ class DriveReader():
             print("Please specify the folders to search in `folders.json`.")
             return
 
-        self.data: dict[Category, dict[Year, dict[Code, int]]] = {}
+        self.data: dict[Category, dict[Year, dict[Code, int]]] = {i: {"0": {"0": 0}} for i in self.categories}
         self.exempt: list[tuple[Name, str]] = []
 
         for folder_search in folder_names:
@@ -362,11 +362,12 @@ class DriveReader():
                 print(f"An error occurred: {error}")
 
         else:
-            for category in self.data:
+            for category in list(self.data.keys()):
                 for year, year_data in self.data[category].items():
-                    order_list: list[str] = sorted(year_data.keys())
-                    new_list = dict([(i, year_data[i]) for i in order_list])
-                    self.data[category][year] = new_list
+                    self.data[category][year] = self.sort_dictionary(year_data)
+                self.data[category] = self.sort_dictionary(self.data[category], True)
+                if "0" in self.data[category]:
+                    self.data.pop(category)
 
     def classify_file(self, name:str):
         """Classify the file in categories based on naming structure."""
@@ -404,11 +405,18 @@ class DriveReader():
                 if "0" in self.data:
                     self.data.pop("0")
 
+    def sort_dictionary(self, unsorted_dict: dict[str, ], reverse=False):
+        """A util function to sort the keys of a dictionary."""
+        order_list: list[str] = sorted(unsorted_dict.keys(), reverse=reverse)
+        sorted_dictionary = dict({i: unsorted_dict[i] for i in order_list})
+        return sorted_dictionary
+
     def main(self):
         """The main function of DriveReader class."""
-        self.download_sheet()
+        # self.download_sheet()
         self.excelWorker = ExcelWorker()
         self.code_list = self.excelWorker.code_list
+        self.categories = self.excelWorker.classification_list.values()
         self.categorize_files()
         with open("data/data.json", "w") as file:
             data_obj = dumps(self.data, indent=4)
