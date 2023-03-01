@@ -1,4 +1,4 @@
-/drivevenv
-/__pycache__
+drivevenv
+__pycache__
 token.json
 credentials.json
