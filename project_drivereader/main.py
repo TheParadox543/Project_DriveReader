@@ -65,7 +65,7 @@ class ExcelWorker():
         """Read the classification categories."""
         # Load the workbook, if not exit the program.
         try:
-            self.doc_wb:Workbook = load_workbook("doc_classification.xlsx")
+            self.doc_wb:Workbook = load_workbook("data/doc_classification.xlsx")
         except FileNotFoundError: 
             print("Classification file not found.")
             sysexit()
@@ -156,7 +156,7 @@ class ExcelWorker():
                 #     os.system("taskkill/im EXCEL.EXE categorized.xlsx")
                 # except:
                 #     pass
-                workbook.save("categorized.xlsx")
+                workbook.save("data/categorized.xlsx")
             except PermissionError:
                 try:
                     ossystem("taskkill/im EXCEL.EXE categorized.xlsx")
@@ -208,7 +208,7 @@ class ExcelWorker():
         start, word = 1, None
         for num, (classification, category) in enumerate(self.classification_list.items(), 2):
             naac_ws.append([category, classification, spec_data.get(classification, 0)])
-            width = max(width, len(category*1.2))
+            width = max(width, len(category)*1.2)
             if word != category:
                 naac_ws.merge_cells(f"A{start}:A{num-1}")
                 naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
@@ -226,7 +226,7 @@ class ExcelWorker():
 
         while True:
             try:
-                naac_wb.save("naac.xlsx")
+                naac_wb.save("data/naac.xlsx")
                 break
             except PermissionError:
                 print("Failed to save naac.xlsx")
@@ -258,7 +258,7 @@ class DriveReader():
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run.
-            with open("token.json", "w") as token:
+            with open("data/token.json", "w") as token:
                 token.write(self.creds.to_json())
 
         # Create a connection with drive.
@@ -311,7 +311,7 @@ class DriveReader():
             while done is False:
                 status, done = downloader.next_chunk()
 
-            with open("doc_classification.xlsx", "wb") as write_file:
+            with open("data/doc_classification.xlsx", "wb") as write_file:
                 write_file.write(file.getbuffer())
 
             print(F'Download {int(status.progress() * 100)}.')
@@ -410,12 +410,12 @@ class DriveReader():
         self.excelWorker = ExcelWorker()
         self.code_list = self.excelWorker.code_list
         self.categorize_files()
-        # with open("data.json", "w") as file:
-        #     data_obj = dumps(self.data, indent=4)
-        #     file.write(data_obj)
-        # with open("exempt.json", "w") as file:
-        #     exempt_obj = dumps(self.exempt, indent=4)
-        #     file.write(exempt_obj)
+        with open("data/data.json", "w") as file:
+            data_obj = dumps(self.data, indent=4)
+            file.write(data_obj)
+        with open("data/exempt.json", "w") as file:
+            exempt_obj = dumps(self.exempt, indent=4)
+            file.write(exempt_obj)
         self.excelWorker.write_data_to_excel(self.data, self.exempt)
         self.excelWorker.write_naac_data_to_excel(self.data)
 
