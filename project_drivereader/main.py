@@ -142,6 +142,7 @@ class ExcelWorker():
                 start = stop
             worksheet.column_dimensions["B"].width = width
             worksheet.column_dimensions["A"].width = 13
+
         worksheet = workbook["exempted"]
         worksheet.append(["File Name", "Folder name"])
         width1, width2 = 13, 13
@@ -150,6 +151,9 @@ class ExcelWorker():
             width1, width2 = max(width1, len(value[0])), max(width2, len(value[1]))
         worksheet.column_dimensions["A"].width = width1
         worksheet.column_dimensions["B"].width = width2
+        for i in range(1, 3):
+            worksheet[f"{get_column_letter(i)}1"].alignment = Alignment(horizontal="center")
+            worksheet[f"{get_column_letter(i)}1"].font = Font(bold=True, size=12)
         while True:
             try:
                 # try:
