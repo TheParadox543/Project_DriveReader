@@ -1,4 +1,5 @@
 {
+    "CDC": {},
     "TLEC": {
         "2022-2023": {
             "ACHI": 1
@@ -23,11 +24,12 @@
             "MOUS": 1
         }
     },
+    "STUDENT SUPPORT": {},
     "DQAC": {
         "2022-2023": {
             "CATT": 2,
             "CKEY": 1,
-            "COPL": 1,
+            "COPL": 3,
             "CPRS": 4,
             "CPUB": 2,
             "CSCH": 1,

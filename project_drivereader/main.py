@@ -50,11 +50,11 @@ logger_monitor.addHandler(handler)
 
 
 # * Declare a few types to help with understanding.
-Category = TypeVar("Category", str)
-Classification = TypeVar("Classification", str)
-Code = TypeVar("Code", str)
-Name = TypeVar("Name", str)
-Year = TypeVar("Year", str)
+Category = TypeVar("Category", bound=str)
+Classification = TypeVar("Classification", bound=str)
+Code = TypeVar("Code", bound=str)
+Name = TypeVar("Name", bound=str)
+Year = TypeVar("Year", bound=str)
 
 def sort_dictionary(unsorted_dict: dict[str, ], reverse=False):
     """A util function to sort the keys of a dictionary.
@@ -146,10 +146,10 @@ class ExcelWorker():
 
         Parameters
         ----------
-        - drive_data: The raw data of the different files that satisfy the 
-        necessary conditions in all folders.  
-        - exempted: The files that are exempted from classification due to any
-        reason.
+        - drive_data: The raw data of the different files that satisfy 
+        the necessary conditions in all folders.  
+        - exempted: The files that are exempted from classification 
+        due to any reason.
         """
         workbook = Workbook()
         workbook.active.title = "exempted"
@@ -211,7 +211,7 @@ class ExcelWorker():
             else:
                 break
         # * Open the workbook to see the result.
-        # os.system("start EXCEL.EXE categorized.xlsx")
+        ossystem("start EXCEL.EXE data/categorized.xlsx")
 
     def write_naac_data_to_excel(self, 
             drive_data: dict[Category, dict[Year, dict[Code, int]]]):
@@ -235,6 +235,7 @@ class ExcelWorker():
 
         naac_wb = Workbook()
         naac_ws: Worksheet = naac_wb.active
+        naac_ws.title = "2022-2023"
         start, width = 1, 13
         logger_monitor.debug(spec_data)
     
@@ -257,7 +258,7 @@ class ExcelWorker():
     
         # * Entering all specification codes.
         naac_ws.append(["Classification", "Code", "Count"])
-        start, word = 1, None
+        start, word = 1, "Classification"
         for num, (classification, category) in enumerate(self.classification_list.items(), 2):
             naac_ws.append({
                     "B": classification, 
@@ -269,7 +270,7 @@ class ExcelWorker():
                 naac_ws.merge_cells(f"A{start}:A{num-1}")
                 naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
                                                            vertical="center")
-                naac_ws[f"A{start}"] = category
+                naac_ws[f"A{start}"] = word
                 start, word = num, category
         else:
             # Merge remaining categories.
@@ -294,7 +295,7 @@ class ExcelWorker():
             except PermissionError:
                 print("Failed to save naac.xlsx")
                 ossystem("taskkill /im EXCEL.EXE naac.xlsx")
-        # ossystem("start EXCEL.EXE naac.xlsx")
+        ossystem("start EXCEL.EXE data/naac.xlsx")
 
 
 class DriveReader():
@@ -374,8 +375,14 @@ class DriveReader():
             while done is False:
                 status, done = downloader.next_chunk()
 
-            with open("data/doc_classification.xlsx", "wb") as write_file:
-                write_file.write(file.getbuffer())
+            while True:
+                try:
+                    with open("data/doc_classification.xlsx", "wb") as write_file:
+                        write_file.write(file.getbuffer())
+                except PermissionError:
+                    ossystem("taskkill /im EXCEL.EXE naac.xlsx")
+                else:
+                    break
 
             print(F'Download {int(status.progress() * 100)}.')
             return True
@@ -431,7 +438,11 @@ class DriveReader():
 
         else:
             for category in list(self.data.keys()):
+                while "0" in self.data[category]:
+                    del self.data[category]["0"]
                 for year, year_data in self.data[category].items():
+                    while "0" in year_data:
+                        del year_data["0"]
                     self.data[category][year] = sort_dictionary(year_data)
                 self.data[category] = sort_dictionary(self.data[category], True)
                 if "0" in self.data[category]:
@@ -464,18 +475,12 @@ class DriveReader():
                 year_data = category_data.get(year, {"0": 0})
                 code_val = year_data.get(code, 0)
                 year_data.update({code: code_val + 1})
-                if "0" in year_data:
-                    year_data.pop("0")
                 category_data.update({year: year_data})
-                if "0" in category_data: 
-                    category_data.pop("0")
                 self.data.update({category: category_data})
-                if "0" in self.data:
-                    self.data.pop("0")
 
     def main(self):
         """The main function of DriveReader class."""
-        # self.download_sheet()
+        self.download_sheet()
         self.excelWorker = ExcelWorker()
         self.code_list = self.excelWorker.code_list
         self.categories = self.excelWorker.classification_list.values()
