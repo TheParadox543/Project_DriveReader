@@ -19,6 +19,7 @@ from json import dumps, load
 from os import path, system as ossystem
 from pprint import PrettyPrinter
 from sys import exit as sysexit
+from typing import Optional, TypeVar
 
 # Import project specific modules.
 from google.auth.transport.requests import Request
@@ -42,29 +43,18 @@ pp = PrettyPrinter(indent=4)
 
 # Using the logs.
 logger_monitor = logging.getLogger(__name__)
-logger_monitor.setLevel(logging.DEBUG)
+logger_monitor.setLevel(logging.ERROR)
 handler = logging.FileHandler("drive_reader_logs.log")
 handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger_monitor.addHandler(handler)
 
 
-# * A few classes to identify the different data extracted from drive
-# * and excel.
-class Category():
-    """"""
-
-class Classification():
-    """"""
-
-class Code():
-    """"""
-
-class Name():
-    """"""
-
-class Year():
-    """"""
-
+# * Declare a few types to help with understanding.
+Category = TypeVar("Category", str)
+Classification = TypeVar("Classification", str)
+Code = TypeVar("Code", str)
+Name = TypeVar("Name", str)
+Year = TypeVar("Year", str)
 
 def sort_dictionary(unsorted_dict: dict[str, ], reverse=False):
     """A util function to sort the keys of a dictionary.
@@ -108,7 +98,8 @@ class ExcelWorker():
 
         # "RPIF": [full name, category, [1.2, 2,3]]
         self.code_list: dict[Code, tuple[Name, Category, list[Classification]]] = {} 
-        self.classification_list: dict[Classification, Category] = {} # "2.3.4": "Research"
+        # "2.3.4": "Research"
+        self.classification_list: dict[Classification, Category] = {} 
         ws: Worksheet
 
         # Loop through all sheets and categorize each code.
@@ -119,8 +110,8 @@ class ExcelWorker():
                                                min_row=3, values_only=True):
                     category: Category = row[0] or category
                     classification: Classification = row[1] or classification
-                    code: Code = row[2]
-                    name: Name = row[3]
+                    code: Optional[Code] = row[2]
+                    name: Optional[Name] = row[3]
 
                     if code and name:
                         if code not in self.code_list:
@@ -402,7 +393,12 @@ class DriveReader():
             print("Please specify the folders to search in `folders.json`.")
             return
 
-        self.data: dict[Category, dict[Year, dict[Code, int]]] = {i: {"0": {"0": 0}} for i in self.categories}
+        self.data: dict[Category, dict[Year, dict[Code, int]]] = {
+            i: {
+                "0": {
+                    "0": 0
+                }
+            } for i in self.categories}
         self.exempt: list[tuple[Name, str]] = []
 
         for folder_search in folder_names:
