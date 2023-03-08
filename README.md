@@ -2,7 +2,7 @@
 
 Package reads files in drive and categorizes the data for academic purposes.
 
-## Installation
+<!-- ## Installation
 
 ```bash
 $ pip install drivereader
@@ -10,7 +10,7 @@ $ pip install drivereader
 
 ## Usage
 
-- TODO
+- TODO -->
 
 ## Contributing
 
