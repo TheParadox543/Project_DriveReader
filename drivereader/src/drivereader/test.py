@@ -148,7 +148,7 @@ def search_test_1():
             # pylint: disable=maybe-no-member
             # response = service.files().list(q="name contains 'Teacher'",
             #                                 spaces='drive',
-            #                                 fields='nextPageToken,' 
+            #                                 fields='nextPageToken,'
             #                                         'files(id, name, parents)',
             #                                 pageToken=page_token).execute()
             response = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and '1vV5M8ZPeeFBKReEa1n7eFhMJev8Z7luu' in parents",
@@ -203,7 +203,7 @@ def search_test():
                                                 spaces='drive',
                                                 fields='nextPageToken, files(id, name, mimeType)',
                                                 pageToken=page_token).execute()
-            
+
             parent_key = []
 
             # print(f"Parent name: {parent_name}")

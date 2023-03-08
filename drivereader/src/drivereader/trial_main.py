@@ -59,19 +59,19 @@ class DriveReader():
 
         # * If using in colab, write data to a file to read it.
         # token_data = {
-        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJyAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0qHaw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZuRCQhdNrvsJeal5xTw0166", 
-        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4", 
-        #     "token_uri": "https://oauth2.googleapis.com/token", 
-        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com", 
-        #     "client_secret": "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", 
-        #     "scopes": ["https://www.googleapis.com/auth/drive.metadata.readonly"], 
+        #     "token": "ya29.a0AVvZVsq8eUGpg0u9HQyI-7QbepWZaII6cNfKL3M4o5pqKpmJyAkdhRAFZtyVlnQgrYkoflZ-QlpBfDEXl9uzNH5iT2DfAITeV90Pbjqtam5RpAw5tg0qHaw2vBoFnaArEjIx3HcXp9hb-W3PEFyPkYGHvQfqT1oaCgYKAZgSAQASFQGbdwaIpxNZuRCQhdNrvsJeal5xTw0166",
+        #     "refresh_token": "1//0g8z1TL7yIR9nCgYIARAAGBASNwF-L9IrAH69OICd-hAn12CsP-Q9CRFUZRKmm3QxyKKmrTwDKBeRjPMBet6OUMgwpUE4sE1Ood4",
+        #     "token_uri": "https://oauth2.googleapis.com/token",
+        #     "client_id": "387082150823-sclbdmg71jaqpsi1clv8hcqc3dvb7beg.apps.googleusercontent.com",
+        #     "client_secret": "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",
+        #     "scopes": ["https://www.googleapis.com/auth/drive.metadata.readonly"],
         #     "expiry": "2023-02-09T11:11:14.527394Z"
         # }
 
-        # The file stores user's access and refresh tokens, and is created 
+        # The file stores user's access and refresh tokens, and is created
         # automatically when first authorization flow is completed.
         if os.path.exists(f"{user}.json"):
-            self.creds = Credentials.from_authorized_user_file(f"{user}.json", 
+            self.creds = Credentials.from_authorized_user_file(f"{user}.json",
                                                                SCOPES)
 
         if not self.creds or not self.creds.valid:
@@ -102,7 +102,7 @@ class DriveReader():
 
     def search_id_file(self, name:str):
         """Search for a specific file or folder by its given name.
-        
+
         - name:str: The name of the file to search for."""
         try:
             response = self.service.files().list(
@@ -151,7 +151,7 @@ class DriveReader():
         """Search for folders and files in the Project folder."""
         # while True:
         try:
-            # * Search for folder "CUCS - Faculty". If files are in a 
+            # * Search for folder "CUCS - Faculty". If files are in a
             # * different folder, change the query.
             main_folder_name = "CUCS - Faculty"
             response:dict = self.service.files().list(
@@ -172,7 +172,7 @@ class DriveReader():
                     self.database_new = {}
                     self.data_new = {}
                     # Run the program through the recursive function.
-                    self.data_new = self.search_folders(main_folder_id, 
+                    self.data_new = self.search_folders(main_folder_id,
                                                 main_folder_name)
                     # self.update_json_files()
                 else:
@@ -197,7 +197,7 @@ class DriveReader():
                     # self.database_new = {}
                     # self.data_new = {}
                     # Run the program through the recursive function.
-                    self.data_new.update(self.search_folders(main_folder_id, 
+                    self.data_new.update(self.search_folders(main_folder_id,
                                                 main_folder_name))
                     self.update_json_files()
                 else:
@@ -214,7 +214,7 @@ class DriveReader():
         Parameters
         ---------
         - parent_id`str`: The id of the parent folder.
-        - parent_name`str`: The name of the parent folder. 
+        - parent_name`str`: The name of the parent folder.
 
         Returns
         -------
@@ -235,7 +235,7 @@ class DriveReader():
                     # // print(f"{start_str}{file.get('name')}, {file.get('mimeType')}")
                     # Check if the file is of folder type
                     if file.get('mimeType')[28:] == "folder":
-                        returned_folder = self.search_folders(file.get("id"), 
+                        returned_folder = self.search_folders(file.get("id"),
                                                               file.get("name"))
                         files.append(returned_folder)
                     else:

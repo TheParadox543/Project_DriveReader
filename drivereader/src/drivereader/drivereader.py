@@ -1,7 +1,7 @@
 """
-This project intends to read the required files from Google Drive, and 
-then based on the naming convention applied to those files, analyse and 
-categorize the available data into the necessary format. 
+This project intends to read the required files from Google Drive, and
+then based on the naming convention applied to those files, analyse and
+categorize the available data into the necessary format.
 
 Project Creation: Feb 3, 2023
 Lead Developer: Sam Alex Koshy
@@ -58,7 +58,7 @@ Year = TypeVar("Year", bound=str)
 
 def sort_dictionary(unsorted_dict: dict[str, ], reverse=False):
     """A util function to sort the keys of a dictionary.
-    
+
     Parameters
     ---------
     - unsorted_dict`dict[str, Any]`: The dictionary that needs to be sorted.
@@ -85,7 +85,7 @@ class ExcelWorker():
         try:
             self.doc_wb:Workbook = load_workbook("data/doc_classification.xlsx")
             logger_monitor.debug("Classification file found.")
-        except FileNotFoundError: 
+        except FileNotFoundError:
             print("Classification file not found.")
             logger_monitor.warning("Classification file not found.")
             sysexit()
@@ -97,16 +97,16 @@ class ExcelWorker():
         # Name - The full name of the previous mentioned.
 
         # "RPIF": [full name, category, [1.2, 2,3]]
-        self.code_list: dict[Code, tuple[Name, Category, list[Classification]]] = {} 
+        self.code_list: dict[Code, tuple[Name, Category, list[Classification]]] = {}
         # "2.3.4": "Research"
-        self.classification_list: dict[Classification, Category] = {} 
+        self.classification_list: dict[Classification, Category] = {}
         ws: Worksheet
 
         # Loop through all sheets and categorize each code.
         for ws in self.doc_wb:
             if ws.title == "NAAC Quantitative":
 
-                for row in ws.iter_rows(min_col=1, max_col=4, 
+                for row in ws.iter_rows(min_col=1, max_col=4,
                                                min_row=3, values_only=True):
                     category: Category = row[0] or category
                     classification: Classification = row[1] or classification
@@ -122,7 +122,7 @@ class ExcelWorker():
                     if classification not in self.classification_list:
                         self.classification_list[classification] = category
 
-            #Any other sheet, check if any code is missing and then add it. 
+            #Any other sheet, check if any code is missing and then add it.
             else:
                 for row in ws.iter_rows(min_col=2, max_col=3):
                     code, name = row[0].value, row[1].value
@@ -139,16 +139,16 @@ class ExcelWorker():
         logger_monitor.debug(self.code_list)
         logger_monitor.debug(self.classification_list)
 
-    def write_data_to_excel(self, 
-            drive_data: dict[Category, dict[Year, dict[Code, int]]], 
+    def write_data_to_excel(self,
+            drive_data: dict[Category, dict[Year, dict[Code, int]]],
             exempted: list[tuple[Name, str]]):
         """Write data from the drive to the excel sheet.
 
         Parameters
         ----------
-        - drive_data: The raw data of the different files that satisfy 
-        the necessary conditions in all folders.  
-        - exempted: The files that are exempted from classification 
+        - drive_data: The raw data of the different files that satisfy
+        the necessary conditions in all folders.
+        - exempted: The files that are exempted from classification
         due to any reason.
         """
         workbook = Workbook()
@@ -177,7 +177,7 @@ class ExcelWorker():
 
                 # Merge the cells of same years, and center the alignment.
                 worksheet.merge_cells(f"A{start}:A{stop-1}")
-                worksheet[f"A{start}"].alignment = Alignment(horizontal="center", 
+                worksheet[f"A{start}"].alignment = Alignment(horizontal="center",
                                                              vertical="center")
                 start = stop
             # Fix width to readable length.
@@ -213,13 +213,13 @@ class ExcelWorker():
         # * Open the workbook to see the result.
         ossystem("start EXCEL.EXE data/categorized.xlsx")
 
-    def write_naac_data_to_excel(self, 
+    def write_naac_data_to_excel(self,
             drive_data: dict[Category, dict[Year, dict[Code, int]]]):
         """Write data to excel sheet in naac required format.
 
         Parameters
         ----------
-        - drive_data: The raw data of the different files that satisfy the 
+        - drive_data: The raw data of the different files that satisfy the
         necessary conditions in all folders."""
         spec_data = {} # Alias for classification data.
 
@@ -238,14 +238,14 @@ class ExcelWorker():
         naac_ws.title = "2022-2023"
         start, width = 1, 13
         logger_monitor.debug(spec_data)
-    
+
         # * Entering the data that is there.
         # for spec in spec_data:
         #     number = int(spec[0])
         #     if old_number != number:
         #         naac_ws.merge_cells(f"A{start}:A{stop}")
         #         start = stop + 1
-        #         naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+        #         naac_ws[f"A{start}"].alignment = Alignment(horizontal="center",
         #                                                    vertical="center")
         #         old_number = number
         #         # stop += 1
@@ -255,27 +255,27 @@ class ExcelWorker():
         #     naac_ws[f"B{stop}"] = spec
         #     naac_ws[f"C{stop}"] = spec_data[spec]
         # naac_ws.column_dimensions["A"].width = width
-    
+
         # * Entering all specification codes.
         naac_ws.append(["Classification", "Code", "Count"])
         start, word = 1, "Classification"
         for num, (classification, category) in enumerate(self.classification_list.items(), 2):
             naac_ws.append({
-                    "B": classification, 
+                    "B": classification,
                     "C": spec_data.get(classification, 0)
             })
             width = max(width, len(category)*1.2)
             # When word changes, merge cells.
             if word != category:
                 naac_ws.merge_cells(f"A{start}:A{num-1}")
-                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center",
                                                            vertical="center")
                 naac_ws[f"A{start}"] = word
                 start, word = num, category
         else:
             # Merge remaining categories.
             naac_ws.merge_cells(f"A{start}:A{num}")
-            naac_ws[f"A{start}"].alignment = Alignment(horizontal="center", 
+            naac_ws[f"A{start}"].alignment = Alignment(horizontal="center",
                                                         vertical="center")
             naac_ws[f"A{start}"] = category
 
@@ -308,10 +308,10 @@ class DriveReader():
 
     def initialize_connection(self):
         """Make the initial connection with drive."""
-        # The file stores user's access and refresh tokens, and is created 
+        # The file stores user's access and refresh tokens, and is created
         # automatically when first authorization flow is completed.
         if path.exists("token.json"):
-            self.creds = Credentials.from_authorized_user_file("token.json", 
+            self.creds = Credentials.from_authorized_user_file("token.json",
                                                                SCOPES)
 
         if not self.creds or not self.creds.valid:
@@ -390,7 +390,7 @@ class DriveReader():
         except HttpError as error:
             print(f"{error} has occurred.")
             return False
-        
+
     def categorize_files(self):
         """Categorize the files in the various folders according to code."""
         try:
