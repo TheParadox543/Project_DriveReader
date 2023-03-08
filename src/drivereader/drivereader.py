@@ -219,8 +219,9 @@ class ExcelWorker():
 
         Parameters
         ----------
-        - drive_data: The raw data of the different files that satisfy the
-        necessary conditions in all folders."""
+        - drive_data: The raw data of the different files that satisfy
+        the necessary conditions in all folders.
+        """
         spec_data = {} # Alias for classification data.
 
         # Take the data for 22-23 and put in naac excel.
@@ -230,7 +231,9 @@ class ExcelWorker():
                     for code, value in year_data.items():
                         if self.code_list.get(code):
                             for spec in self.code_list[code][2]:
-                                spec_data.update({spec: spec_data.get(spec, 0) + value})
+                                spec_data.update({
+                                    spec: spec_data.get(spec, 0) + value
+                                })
         spec_data = sort_dictionary(spec_data)
 
         naac_wb = Workbook()
@@ -259,7 +262,8 @@ class ExcelWorker():
         # * Entering all specification codes.
         naac_ws.append(["Classification", "Code", "Count"])
         start, word = 1, "Classification"
-        for num, (classification, category) in enumerate(self.classification_list.items(), 2):
+        for num, (classification, category) in \
+                enumerate(self.classification_list.items(), 2):
             naac_ws.append({
                     "B": classification,
                     "C": spec_data.get(classification, 0)
@@ -268,8 +272,9 @@ class ExcelWorker():
             # When word changes, merge cells.
             if word != category:
                 naac_ws.merge_cells(f"A{start}:A{num-1}")
-                naac_ws[f"A{start}"].alignment = Alignment(horizontal="center",
-                                                           vertical="center")
+                naac_ws[f"A{start}"].alignment = Alignment(
+                    horizontal="center", vertical="center"
+                )
                 naac_ws[f"A{start}"] = word
                 start, word = num, category
         else:
@@ -311,8 +316,10 @@ class DriveReader():
         # The file stores user's access and refresh tokens, and is created
         # automatically when first authorization flow is completed.
         if path.exists("token.json"):
-            self.creds = Credentials.from_authorized_user_file("token.json",
-                                                               SCOPES)
+            self.creds = Credentials.from_authorized_user_file(
+                "token.json",
+                SCOPES
+            )
 
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
@@ -322,7 +329,7 @@ class DriveReader():
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run.
-            with open("data/token.json", "w") as token:
+            with open("token.json", "w") as token:
                 token.write(self.creds.to_json())
 
         # Create a connection with drive.
@@ -398,6 +405,7 @@ class DriveReader():
                 folder_names: list[str] = load(file)
         except FileNotFoundError:
             print("Please specify the folders to search in `folders.json`.")
+            self.data = None
             return
 
         self.data: dict[Category, dict[Year, dict[Code, int]]] = {
@@ -485,14 +493,15 @@ class DriveReader():
         self.code_list = self.excelWorker.code_list
         self.categories = self.excelWorker.classification_list.values()
         self.categorize_files()
-        with open("data/data.json", "w") as file:
-            data_obj = dumps(self.data, indent=4)
-            file.write(data_obj)
-        with open("data/exempt.json", "w") as file:
-            exempt_obj = dumps(self.exempt, indent=4)
-            file.write(exempt_obj)
-        self.excelWorker.write_data_to_excel(self.data, self.exempt)
-        self.excelWorker.write_naac_data_to_excel(self.data)
+        if self.data is not None:
+            with open("data/data.json", "w") as file:
+                data_obj = dumps(self.data, indent=4)
+                file.write(data_obj)
+            with open("data/exempt.json", "w") as file:
+                exempt_obj = dumps(self.exempt, indent=4)
+                file.write(exempt_obj)
+            self.excelWorker.write_data_to_excel(self.data, self.exempt)
+            self.excelWorker.write_naac_data_to_excel(self.data)
 
 
 if __name__ == "__main__":

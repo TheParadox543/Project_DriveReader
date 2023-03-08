@@ -145,3 +145,6 @@ dmypy.json
 # Credentials
 token.json
 credentials.json
+
+# Data
+data/
