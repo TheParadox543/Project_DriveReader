@@ -1,6 +1,6 @@
 # drivereader
 
-Package reads files in drive and categorizes the data for academic purposes.
+Reads files in google drive and categorizes the data according to naming conventions for academic purposes.
 
 <!-- ## Installation
 
