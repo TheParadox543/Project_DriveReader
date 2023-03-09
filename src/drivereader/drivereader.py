@@ -127,7 +127,7 @@ class ExcelWorker():
                 for row in ws.iter_rows(min_col=2, max_col=3):
                     code, name = row[0].value, row[1].value
                     if code and name and code not in self.code_list:
-                        self.code_list[code] = [name, category, ["Unknown"]]
+                        self.code_list[code] = [name, ws.title, ["Unknown"]]
 
         #Write the generated data to files for evaluation.
         with open("data/code_list.json", "w") as file:
