@@ -16,13 +16,14 @@ from __future__ import print_function
 import logging
 from io import BytesIO
 from json import dumps, load
-from os import path, system as ossystem
+from os import path, system as ossystem, remove
 from pprint import PrettyPrinter
 from sys import exit as sysexit
 from typing import Optional, TypeVar
 
 # Import project specific modules.
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -107,7 +108,7 @@ class ExcelWorker():
             if ws.title == "NAAC Quantitative":
 
                 for row in ws.iter_rows(min_col=1, max_col=4,
-                                               min_row=3, values_only=True):
+                                                min_row=3, values_only=True):
                     category: Category = row[0] or category
                     classification: Classification = row[1] or classification
                     code: Optional[Code] = row[2]
@@ -116,7 +117,7 @@ class ExcelWorker():
                     if code and name:
                         if code not in self.code_list:
                             self.code_list[code] = [name, category,
-                                                     [classification]]
+                                                    [classification]]
                         else:
                             self.code_list[code][2].append(classification)
                     if classification not in self.classification_list:
@@ -322,9 +323,15 @@ class DriveReader():
             )
 
         if not self.creds or not self.creds.valid:
+            refresh = False
             if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
+                try:
+                    self.creds.refresh(Request())
+                except RefreshError:
+                    remove("token.json")
+                else:
+                    refresh = True
+            if refresh is False:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     "credentials.json", SCOPES)
                 self.creds = flow.run_local_server(port=0)
@@ -391,7 +398,7 @@ class DriveReader():
                 else:
                     break
 
-            print(F'Download {int(status.progress() * 100)}.')
+            print(F'Download {int(status.progress() * 100)}%.')
             return True
 
         except HttpError as error:
