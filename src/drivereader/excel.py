@@ -47,7 +47,6 @@ class ExcelWorker():
     """The class that will handle interaction with the excel workbooks."""
 
     def __init__(self) -> None:
-        """Initialize the class."""
         self.read_classification_exl()
 
     def read_classification_exl(self):

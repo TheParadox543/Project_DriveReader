@@ -76,7 +76,6 @@ class DriveReader():
     """This project aims to read files in a drive and categorize them."""
 
     def __init__(self) -> None:
-        """Initialize the class."""
         self.creds = None
         self.initialize_connection()
 
