@@ -31,7 +31,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 
-from .excel import ExcelWorker
+from drivereader.excel import ExcelWorker
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
